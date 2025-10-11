@@ -1,14 +1,30 @@
+// src/layouts/LayoutPublic.jsx
 import React from "react";
+import { Outlet, Navigate } from "react-router-dom";
+import AuthUser from "../pageauth/AuthUser";
+
+// 🧩 Componentes que ya tenías
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Outlet } from "react-router-dom";
 
 const LayoutPublic = () => {
+    const { getToken, getRol } = AuthUser();
+
+    // 🔒 Si ya hay sesión activa, redirigir al panel correspondiente
+    if (getToken()) {
+        if (getRol() === "admin") return <Navigate to="/admin" replace />;
+        if (getRol() === "docente") return <Navigate to="/docente" replace />;
+        if (getRol() === "estudiante")
+            return <Navigate to="/estudiante" replace />;
+    }
+
+    // 🧱 Si no está logueado, mostrar el layout público
     return (
         <>
-            <h1>PUBLIC</h1>
             <Navbar />
-            <Outlet />
+            <main className="container py-4">
+                <Outlet />
+            </main>
             <Footer />
         </>
     );

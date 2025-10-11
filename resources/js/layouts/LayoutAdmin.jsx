@@ -17,7 +17,6 @@ const LayoutAdmin = () => {
     }, []);
     return (
         <div>
-            <h1>ADMIN</h1>
             <Navbar />
             <Outlet />
             <Footer />
