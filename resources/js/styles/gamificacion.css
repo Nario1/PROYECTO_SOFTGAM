@@ -1,0 +1,107 @@
+/* gamificacion.css */
+
+/* Cards gamificadas */
+.gam-card {
+    background: #1e1e2f;
+    color: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.gam-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Glow cuando suben puntos o nivel */
+.glow {
+    animation: glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 5px #fff;
+    }
+    to {
+        box-shadow: 0 0 20px #ffd700;
+    }
+}
+
+/* Barra de progreso */
+.progress-container {
+    background: #2e2e3f;
+    border-radius: 20px;
+    height: 20px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #f6d365, #fda085);
+    width: 0%;
+    transition: width 1s ease-in-out;
+    border-radius: 20px;
+}
+
+/* Feedback correcto / incorrecto */
+.correct {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    animation: pop 0.5s ease-in-out;
+}
+
+.incorrect {
+    background-color: #f44336;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    animation: shake 0.5s;
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(0);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes shake {
+    0% {
+        transform: translateX(0px);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    50% {
+        transform: translateX(5px);
+    }
+    75% {
+        transform: translateX(-5px);
+    }
+    100% {
+        transform: translateX(0px);
+    }
+}
+
+/* Insignias mini cards */
+.insignia-card {
+    background: #3a3a5a;
+    color: #ffd700;
+    padding: 10px;
+    border-radius: 15px;
+    display: inline-block;
+    margin: 5px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s;
+}
+
+.insignia-card:hover {
+    transform: scale(1.1);
+}

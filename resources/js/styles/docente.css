@@ -1,0 +1,28 @@
+/* 🔹 Inputs y Textareas estilo gamificado */
+.admin-input,
+.admin-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #111111; /* fondo oscuro de los textbox */
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(0, 255, 212, 0.1);
+    resize: vertical; /* permite que los textarea se expandan verticalmente */
+}
+
+.admin-input:focus,
+.admin-textarea:focus {
+    border: 1px solid #00ffe0;
+    box-shadow: 0 0 10px rgba(0, 255, 212, 0.6);
+    background: #1a1a1a;
+}
+
+.admin-textarea {
+    min-height: 80px;
+}

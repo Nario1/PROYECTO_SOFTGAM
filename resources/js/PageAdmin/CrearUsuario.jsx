@@ -1,18 +1,18 @@
-// CrearUsuario.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Config from "../Config";
+import "../styles/admin.css"; // estilos del panel
 
 const CrearUsuario = () => {
     const navigate = useNavigate();
-    const [dni, setDni] = React.useState("");
-    const [nombre, setNombre] = React.useState("");
-    const [apellido, setApellido] = React.useState("");
-    const [password, setPassword] = React.useState("");
-    const [rol, setRol] = React.useState("estudiante");
-    const [error, setError] = React.useState("");
+    const [dni, setDni] = useState("");
+    const [nombre, setNombre] = useState("");
+    const [apellido, setApellido] = useState("");
+    const [password, setPassword] = useState("");
+    const [rol, setRol] = useState("estudiante");
+    const [error, setError] = useState("");
+    const [message, setMessage] = useState({ type: "", text: "" }); // <-- alerta dentro de la app
 
-    // 🔹 Validación en tiempo real
     const handleDniChange = (e) => {
         const valor = e.target.value;
         if (!/^\d*$/.test(valor)) {
@@ -59,7 +59,7 @@ const CrearUsuario = () => {
 
     const submitCrearUsuario = async (e) => {
         e.preventDefault();
-        if (error) return; // bloquea envío si hay error en tiempo real
+        if (error) return;
 
         try {
             const response = await Config.GetRegister({
@@ -72,8 +72,17 @@ const CrearUsuario = () => {
             });
 
             if (response.data.success) {
-                alert("Usuario creado correctamente ✅");
-                navigate("/admin/usuarios");
+                // Mostrar mensaje dentro de la app
+                setMessage({
+                    type: "success",
+                    text: "Usuario creado correctamente ✅",
+                });
+
+                // Desaparecer después de 3 segundos y redirigir
+                setTimeout(() => {
+                    setMessage({ type: "", text: "" });
+                    navigate("/admin/usuarios");
+                }, 3000);
             } else {
                 setError(
                     response.data.message || "No se pudo crear el usuario."
@@ -86,63 +95,91 @@ const CrearUsuario = () => {
     };
 
     return (
-        <div className="container mt-4">
-            <h2 className="text-center mb-4">Registrar Nuevo Usuario</h2>
-            {error && <div className="text-danger mb-3">{error}</div>}
-            <form onSubmit={submitCrearUsuario} className="card p-3 shadow-sm">
-                <input
-                    type="text"
-                    placeholder="DNI"
-                    className="form-control mb-2"
-                    value={dni}
-                    onChange={handleDniChange}
-                    required
-                />
-                <input
-                    type="text"
-                    placeholder="Nombre"
-                    className="form-control mb-2"
-                    value={nombre}
-                    onChange={handleNombreChange}
-                    required
-                />
-                <input
-                    type="text"
-                    placeholder="Apellido"
-                    className="form-control mb-2"
-                    value={apellido}
-                    onChange={handleApellidoChange}
-                    required
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    className="form-control mb-2"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    required
-                />
-                <select
-                    className="form-control mb-2"
-                    value={rol}
-                    onChange={(e) => setRol(e.target.value)}
-                    required
+        <div
+            className="admin-container"
+            style={{ justifyContent: "center", alignItems: "center" }}
+        >
+            <div
+                className="admin-content"
+                style={{ maxWidth: "500px", width: "100%" }}
+            >
+                <h2 className="text-center mb-4">Registrar Nuevo Usuario</h2>
+
+                {/* Mensaje dentro de la app */}
+                {message.text && (
+                    <div
+                        className={`admin-alert mb-3 ${
+                            message.type === "success"
+                                ? "alert-success"
+                                : "alert-error"
+                        }`}
+                    >
+                        {message.text}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="admin-alert alert-error mb-3">{error}</div>
+                )}
+
+                <form
+                    onSubmit={submitCrearUsuario}
+                    className="admin-card p-4 shadow-sm"
                 >
-                    <option value="estudiante">Estudiante</option>
-                    <option value="docente">Docente</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <button type="submit" className="btn btn-success w-100 mb-2">
-                    Crear Usuario
-                </button>
-                <button
-                    type="button"
-                    className="btn btn-secondary w-100"
-                    onClick={() => navigate("/admin/usuarios")}
-                >
-                    Cancelar
-                </button>
-            </form>
+                    <input
+                        type="text"
+                        placeholder="DNI"
+                        className="form-control mb-3"
+                        value={dni}
+                        onChange={handleDniChange}
+                        required
+                    />
+                    <input
+                        type="text"
+                        placeholder="Nombre"
+                        className="form-control mb-3"
+                        value={nombre}
+                        onChange={handleNombreChange}
+                        required
+                    />
+                    <input
+                        type="text"
+                        placeholder="Apellido"
+                        className="form-control mb-3"
+                        value={apellido}
+                        onChange={handleApellidoChange}
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        className="form-control mb-3"
+                        value={password}
+                        onChange={handlePasswordChange}
+                        required
+                    />
+                    <select
+                        className="form-control mb-3"
+                        value={rol}
+                        onChange={(e) => setRol(e.target.value)}
+                        required
+                    >
+                        <option value="estudiante">Estudiante</option>
+                        <option value="docente">Docente</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button type="submit" className="admin-btn w-100 mb-2">
+                        Crear Usuario
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-secondary w-100"
+                        onClick={() => navigate("/admin/usuarios")}
+                    >
+                        Cancelar
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };

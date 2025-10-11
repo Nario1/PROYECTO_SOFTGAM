@@ -1,0 +1,206 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    width: 100%;
+    height: 100%;
+    font-family: "Poppins", sans-serif;
+    color: #fff;
+}
+
+/* 🔹 Contenedor de pantalla completa y centrado absoluto */
+.register-container {
+    position: fixed; /* ocupa toda la pantalla sin scroll innecesario */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1b0b42, #2e1572, #4c1eff);
+    background-size: 300% 300%;
+    animation: bgShift 10s ease-in-out infinite alternate;
+    z-index: 1;
+}
+@keyframes bgShift {
+    0% {
+        background-position: left top;
+    }
+    100% {
+        background-position: right bottom;
+    }
+}
+
+/* 🔹 Tarjeta central centrada */
+.register-card {
+    width: 90%;
+    max-width: 420px;
+    background: rgba(
+        255,
+        255,
+        255,
+        0.12
+    ); /* un poco más visible sobre el fondo */
+    backdrop-filter: blur(18px); /* suaviza el fondo detrás de la tarjeta */
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+.register-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 30px 90px rgba(94, 140, 255, 0.3);
+}
+
+/* 🔹 Título */
+.register-card h1 {
+    text-align: center;
+    margin-bottom: 1.8rem;
+    font-weight: 700;
+    font-size: 1.9rem;
+    color: #e0e0ff;
+}
+
+/* 🔹 Inputs */
+.register-card input,
+.register-card select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.register-card input::placeholder {
+    color: #bfbfbf;
+}
+
+.register-card input:focus,
+.register-card select:focus {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 10px #5e8cff;
+}
+
+/* 🔹 Select */
+.register-card select {
+    cursor: pointer;
+    appearance: none;
+}
+
+.register-card select option {
+    background: #1a1a2e;
+    color: #fff;
+}
+
+/* 🔹 Botón */
+.register-card button {
+    width: 100%;
+    background: linear-gradient(135deg, #5e8cff, #3b1fa3);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(94, 140, 255, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.register-card button:hover {
+    background: linear-gradient(135deg, #6e9dff, #4e36d4);
+    transform: scale(1.04);
+    box-shadow: 0 0 25px rgba(94, 140, 255, 0.6);
+}
+
+/* 🔹 Alertas */
+.alert {
+    margin-bottom: 1.2rem;
+    text-align: center;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 500;
+    animation: fadeIn 0.5s ease;
+}
+
+.alert-danger {
+    background: rgba(255, 77, 77, 0.15);
+    border: 1px solid #ff5c5c;
+    color: #ffbaba;
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.15);
+    border: 1px solid #ffc107;
+    color: #ffe082;
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid #4caf50;
+    color: #b9f6ca;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 🔹 Footer */
+.register-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.register-footer a {
+    color: #6e9dff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.register-footer a:hover {
+    color: #a7bfff;
+    text-shadow: 0 0 8px rgba(94, 140, 255, 0.6);
+}
+
+/* 🔹 Responsivo */
+@media (max-width: 600px) {
+    .register-card {
+        padding: 2rem 1.5rem;
+        max-width: 90%;
+    }
+
+    .register-card h1 {
+        font-size: 1.6rem;
+    }
+
+    .register-card button {
+        font-size: 0.95rem;
+    }
+}

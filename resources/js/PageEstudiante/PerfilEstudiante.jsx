@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
+import Config from "../Config";
+import SidebarEstudiante from "./SidebarEstudiante";
+import "../styles/docente.css"; // estilos generales
 
 const niveles = [
     { id: 1, nombre: "Nivel 1", puntos: 0 },
@@ -19,14 +21,12 @@ const PerfilEstudiante = () => {
     const calcularNivel = (totalPuntos) => {
         let actual = niveles[0];
         let siguiente = null;
-
         for (let i = 0; i < niveles.length; i++) {
             if (totalPuntos >= niveles[i].puntos) {
                 actual = niveles[i];
                 siguiente = niveles[i + 1] || null;
             }
         }
-
         return { actual, siguiente };
     };
 
@@ -37,24 +37,19 @@ const PerfilEstudiante = () => {
             const userId = user?.id;
             if (!userId) return setLoading(false);
 
-            // Obtener puntos del estudiante
             const resPuntos = await Config.GetPuntosEstudiante(userId);
             const totalPuntos = resPuntos.data?.data?.puntos?.total || 0;
             setPuntos(totalPuntos);
 
-            // Calcular nivel según puntos
             const { actual, siguiente } = calcularNivel(totalPuntos);
             setNivel(actual);
             setSiguienteNivel(siguiente || { nombre: "No definido" });
 
-            // Actualizar insignias en backend
             await Config.CheckInsignias(userId);
 
-            // Obtener insignias del estudiante
             const resInsignias = await Config.GetInsigniasEstudiante(userId);
             let insigniasData = resInsignias.data?.data?.insignias || [];
 
-            // Forzar asignación de insignias según puntos/nivel
             if (
                 totalPuntos >= 0 &&
                 !insigniasData.find((i) => i.nombre === "Insignia Novato")
@@ -73,7 +68,7 @@ const PerfilEstudiante = () => {
                 insigniasData.push({
                     id: 2,
                     nombre: "Insignia Experto",
-                    descripcion: "Otorgada por alcanzar 50 puntos",
+                    descripcion: "Otorgada por alcanzar 20 puntos",
                     criterio: "nivel:2",
                 });
             }
@@ -102,53 +97,60 @@ const PerfilEstudiante = () => {
     }, []);
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-sm text-center space-y-6">
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+        <div className="admin-container">
+            <SidebarEstudiante />
+
+            <div
+                className="admin-content flex flex-col gap-6 overflow-y-auto"
+                style={{
+                    maxHeight: "calc(100vh - 2rem)",
+                    paddingBottom: "2rem",
+                }}
+            >
+                <h1 className="text-3xl font-extrabold tracking-tight text-white">
                     🎮 Mi Dashboard
                 </h1>
 
                 <button
                     onClick={fetchData}
                     disabled={loading}
-                    className={`w-full px-6 py-2 rounded-full font-semibold text-white transition-colors duration-300
-                        ${
-                            loading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-indigo-600 hover:bg-indigo-700"
-                        }`}
+                    className={`w-full px-6 py-2 rounded-xl font-semibold text-white transition-colors duration-300 admin-btn ${
+                        loading
+                            ? "bg-gray-600 cursor-not-allowed"
+                            : "bg-green-500 hover:bg-green-600"
+                    }`}
                 >
                     {loading ? "Actualizando..." : "Actualizar Dashboard"}
                 </button>
 
-                <div className="grid grid-cols-1 gap-4">
-                    <div className="bg-yellow-50 rounded-2xl p-4 shadow-md">
-                        <h2 className="text-sm font-medium text-yellow-600">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-800 rounded-xl p-4 shadow-md border border-gray-700">
+                        <h2 className="text-sm font-medium text-yellow-400">
                             ⭐ Puntos
                         </h2>
-                        <p className="text-2xl font-bold text-yellow-800">
+                        <p className="text-2xl font-bold text-yellow-300">
                             {puntos}
                         </p>
                     </div>
-                    <div className="bg-blue-50 rounded-2xl p-4 shadow-md">
-                        <h2 className="text-sm font-medium text-blue-600">
+                    <div className="bg-gray-800 rounded-xl p-4 shadow-md border border-gray-700">
+                        <h2 className="text-sm font-medium text-blue-400">
                             📘 Nivel Actual
                         </h2>
-                        <p className="text-xl font-semibold text-blue-800">
+                        <p className="text-xl font-semibold text-blue-300">
                             {nivel?.nombre || "No definido"}
                         </p>
                     </div>
-                    <div className="bg-green-50 rounded-2xl p-4 shadow-md">
-                        <h2 className="text-sm font-medium text-green-600">
+                    <div className="bg-gray-800 rounded-xl p-4 shadow-md border border-gray-700">
+                        <h2 className="text-sm font-medium text-green-400">
                             ⬆️ Siguiente Nivel
                         </h2>
-                        <p className="text-xl font-semibold text-green-800">
+                        <p className="text-xl font-semibold text-green-300">
                             {siguienteNivel?.nombre || "No definido"}
                         </p>
                     </div>
                 </div>
 
-                <h2 className="text-xl font-bold text-gray-900 mt-4">
+                <h2 className="text-xl font-bold mt-6 text-white">
                     🏅 Mis Insignias
                 </h2>
                 {insignias.length > 0 ? (
@@ -156,19 +158,19 @@ const PerfilEstudiante = () => {
                         {insignias.map((insignia) => (
                             <div
                                 key={insignia.id}
-                                className="bg-pink-50 rounded-xl p-3 shadow-sm text-left"
+                                className="bg-gray-800 rounded-xl p-3 shadow-md border border-gray-700 text-left"
                             >
-                                <h3 className="font-semibold text-pink-600">
+                                <h3 className="font-semibold text-pink-400">
                                     {insignia.nombre}
                                 </h3>
-                                <p className="text-sm text-gray-700">
+                                <p className="text-sm text-gray-300">
                                     {insignia.descripcion}
                                 </p>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p className="text-gray-500">
+                    <p className="text-gray-400">
                         Aún no tienes insignias. ¡Completa retos para ganarlas!
                     </p>
                 )}

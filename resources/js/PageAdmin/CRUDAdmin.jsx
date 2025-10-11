@@ -1,4 +1,3 @@
-// CRUDAdmin.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Config from "../Config";
@@ -18,8 +17,8 @@ const CRUDAdmin = () => {
         rol: "",
     });
     const [formError, setFormError] = useState("");
+    const [message, setMessage] = useState({ type: "", text: "" }); // <-- alertas dentro de la app
 
-    // Cargar usuario
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -46,11 +45,9 @@ const CRUDAdmin = () => {
         fetchUser();
     }, [id]);
 
-    // Validación en tiempo real
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Validaciones
         if (name === "dni") {
             if (!/^\d*$/.test(value)) {
                 setFormError("El DNI solo debe contener números.");
@@ -74,40 +71,50 @@ const CRUDAdmin = () => {
         setFormData({ ...formData, [name]: value });
     };
 
-    // Guardar cambios
     const handleUpdate = async (e) => {
         e.preventDefault();
-        if (formError) return; // bloquea submit si hay error en tiempo real
+        if (formError) return;
 
         try {
             const response = await Config.UpdateUser(id, formData);
             if (response.data.success) {
-                alert("Usuario actualizado correctamente ✅");
                 setUser({
                     ...user,
                     ...formData,
                     updated_at: new Date().toISOString(),
                 });
                 setEditMode(false);
+                setMessage({
+                    type: "success",
+                    text: "Usuario actualizado correctamente ✅",
+                });
+
+                // Ocultar mensaje después de 3s
+                setTimeout(() => setMessage({ type: "", text: "" }), 3000);
             } else {
-                alert("No se pudo actualizar el usuario ❌");
+                setMessage({
+                    type: "error",
+                    text: "No se pudo actualizar el usuario ❌",
+                });
             }
         } catch (err) {
             console.error(err);
-            setError("Error al actualizar usuario.");
+            setMessage({ type: "error", text: "Error al actualizar usuario." });
         }
     };
 
-    // Eliminar
     const handleDelete = async () => {
         if (window.confirm("¿Seguro que deseas eliminar este usuario?")) {
             try {
                 await Config.DeleteUser(id);
-                alert("Usuario eliminado ✅");
-                navigate("/admin/usuarios");
+                setMessage({ type: "success", text: "Usuario eliminado ✅" });
+                setTimeout(() => navigate("/admin/usuarios"), 1500); // redirige después de 1.5s
             } catch (err) {
                 console.error(err);
-                setError("Error al eliminar el usuario.");
+                setMessage({
+                    type: "error",
+                    text: "Error al eliminar el usuario.",
+                });
             }
         }
     };
@@ -118,60 +125,94 @@ const CRUDAdmin = () => {
     if (!user) return null;
 
     return (
-        <div className="container mt-4">
-            <h2>Administrar Usuario</h2>
+        <div className="admin-container">
+            <div
+                className="admin-content"
+                style={{
+                    maxWidth: "800px",
+                    margin: "0 auto",
+                    padding: "3rem 2rem",
+                }}
+            >
+                <h2 className="mb-4 text-center">Administrar Usuario</h2>
 
-            {!editMode ? (
-                <>
-                    <div className="card shadow-sm p-3">
-                        <p>
-                            <strong>ID:</strong> {user.id}
-                        </p>
-                        <p>
-                            <strong>DNI:</strong> {user.dni}
-                        </p>
-                        <p>
-                            <strong>Nombre:</strong> {user.nombre}
-                        </p>
-                        <p>
-                            <strong>Apellido:</strong> {user.apellido}
-                        </p>
-                        <p>
-                            <strong>Rol:</strong> {user.rol}
-                        </p>
-                        <p>
-                            <strong>Creado:</strong>{" "}
-                            {new Date(user.created_at).toLocaleDateString()}
-                        </p>
+                {/* Mensaje dentro de la app */}
+                {message.text && (
+                    <div
+                        className={`admin-alert mb-4 ${
+                            message.type === "success"
+                                ? "alert-success"
+                                : "alert-error"
+                        }`}
+                    >
+                        {message.text}
                     </div>
+                )}
 
-                    <div className="mt-3">
-                        <button
-                            className="btn btn-warning me-2"
-                            onClick={() => setEditMode(true)}
+                {!editMode ? (
+                    <>
+                        <div
+                            className="admin-card p-5 mb-4"
+                            style={{ fontSize: "1.1rem" }}
                         >
-                            Editar
-                        </button>
-                        <button
-                            className="btn btn-danger"
-                            onClick={handleDelete}
-                        >
-                            Eliminar
-                        </button>
-                    </div>
-                </>
-            ) : (
-                <>
+                            <p>
+                                <strong>ID:</strong> {user.id}
+                            </p>
+                            <p>
+                                <strong>DNI:</strong> {user.dni}
+                            </p>
+                            <p>
+                                <strong>Nombre:</strong> {user.nombre}
+                            </p>
+                            <p>
+                                <strong>Apellido:</strong> {user.apellido}
+                            </p>
+                            <p>
+                                <strong>Rol:</strong> {user.rol}
+                            </p>
+                            <p>
+                                <strong>Creado:</strong>{" "}
+                                {new Date(user.created_at).toLocaleDateString()}
+                            </p>
+                        </div>
+
+                        <div className="d-flex justify-content-center mb-4">
+                            <button
+                                className="admin-btn me-2"
+                                style={{
+                                    fontSize: "1rem",
+                                    padding: "12px 25px",
+                                }}
+                                onClick={() => setEditMode(true)}
+                            >
+                                Editar
+                            </button>
+                            <button
+                                className="admin-btn bg-danger"
+                                style={{
+                                    fontSize: "1rem",
+                                    padding: "12px 25px",
+                                }}
+                                onClick={handleDelete}
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </>
+                ) : (
                     <form
                         onSubmit={handleUpdate}
-                        className="card p-3 shadow-sm"
+                        className="admin-card p-5 shadow-sm"
+                        style={{ fontSize: "1.1rem" }}
                     >
                         {formError && (
-                            <div className="text-danger mb-2">{formError}</div>
+                            <div className="admin-alert alert-error mb-3">
+                                {formError}
+                            </div>
                         )}
 
                         <div className="mb-3">
-                            <label>DNI</label>
+                            <label className="form-label">DNI</label>
                             <input
                                 type="text"
                                 name="dni"
@@ -181,7 +222,7 @@ const CRUDAdmin = () => {
                             />
                         </div>
                         <div className="mb-3">
-                            <label>Nombre</label>
+                            <label className="form-label">Nombre</label>
                             <input
                                 type="text"
                                 name="nombre"
@@ -191,7 +232,7 @@ const CRUDAdmin = () => {
                             />
                         </div>
                         <div className="mb-3">
-                            <label>Apellido</label>
+                            <label className="form-label">Apellido</label>
                             <input
                                 type="text"
                                 name="apellido"
@@ -201,7 +242,7 @@ const CRUDAdmin = () => {
                             />
                         </div>
                         <div className="mb-3">
-                            <label>Rol</label>
+                            <label className="form-label">Rol</label>
                             <select
                                 name="rol"
                                 className="form-control"
@@ -214,19 +255,32 @@ const CRUDAdmin = () => {
                             </select>
                         </div>
 
-                        <button type="submit" className="btn btn-success me-2">
-                            Guardar
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => setEditMode(false)}
-                        >
-                            Cancelar
-                        </button>
+                        <div className="d-flex justify-content-center">
+                            <button
+                                type="submit"
+                                className="admin-btn me-2"
+                                style={{
+                                    fontSize: "1rem",
+                                    padding: "12px 25px",
+                                }}
+                            >
+                                Guardar
+                            </button>
+                            <button
+                                type="button"
+                                className="admin-btn bg-secondary"
+                                style={{
+                                    fontSize: "1rem",
+                                    padding: "12px 25px",
+                                }}
+                                onClick={() => setEditMode(false)}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
                     </form>
-                </>
-            )}
+                )}
+            </div>
         </div>
     );
 };

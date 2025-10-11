@@ -1,67 +1,60 @@
-// SidebarEstudiante.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
+import "../styles/sidebar.css"; // Usamos los estilos del sidebar del docente
 
 const SidebarEstudiante = () => {
     return (
-        <div className="col-sm-3">
-            <div className="list-group">
-                {/* Perfil Académico */}
-                <NavLink
-                    to="/estudiante/perfil"
-                    className="list-group-item list-group-item-action"
-                >
-                    Perfil Académico
-                </NavLink>
+        <div className="sidebar">
+            <h3>Panel Estudiante</h3>
 
-                {/* Juegos / Actividades */}
-                <NavLink
-                    to="/estudiante/juegos"
-                    className="list-group-item list-group-item-action"
-                >
-                    Juegos / Actividades
-                </NavLink>
+            <NavLink
+                to="/estudiante/perfil"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Perfil Académico
+            </NavLink>
 
-                {/* Actividades asignadas */}
-                <NavLink
-                    to="/estudiante/actividades"
-                    className="list-group-item list-group-item-action"
-                >
-                    Actividades
-                </NavLink>
+            <NavLink
+                to="/estudiante/juegos"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Juegos / Actividades
+            </NavLink>
 
-                {/* Prueba Diagnóstica */}
-                <NavLink
-                    to="/estudiante/diagnostico"
-                    className="list-group-item list-group-item-action"
-                >
-                    Prueba Diagnóstica
-                </NavLink>
+            <NavLink
+                to="/estudiante/actividades"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Actividades
+            </NavLink>
 
-                {/* Calificaciones y Retroalimentaciones */}
-                <NavLink
-                    to="/estudiante/calificaciones"
-                    className="list-group-item list-group-item-action"
-                >
-                    Calificaciones / Retroalimentación
-                </NavLink>
+            <NavLink
+                to="/estudiante/diagnostico"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Prueba Diagnóstica
+            </NavLink>
 
-                {/* Asistencia */}
-                <NavLink
-                    to="/estudiante/asistencia"
-                    className="list-group-item list-group-item-action"
-                >
-                    Asistencia
-                </NavLink>
+            <NavLink
+                to="/estudiante/calificaciones"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Calificaciones / Retroalimentación
+            </NavLink>
 
-                {/* Recursos del Estudiante */}
-                <NavLink
-                    to="/estudiante/recursos"
-                    className="list-group-item list-group-item-action"
-                >
-                    Recursos
-                </NavLink>
-            </div>
+            <NavLink
+                to="/estudiante/asistencia"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Asistencia
+            </NavLink>
+
+            <NavLink
+                to="/estudiante/recursos"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Recursos
+            </NavLink>
         </div>
     );
 };

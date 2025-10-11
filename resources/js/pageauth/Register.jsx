@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "./AuthUser";
 import { useNavigate } from "react-router-dom";
+import "../styles/Register.css";
 
 const Register = () => {
     const { getToken } = AuthUser();
@@ -22,7 +23,6 @@ const Register = () => {
         setTimeout(() => setAlerta(null), 4000);
     };
 
-    // 🔹 Validaciones en tiempo real
     const handleDniChange = (e) => {
         const valor = e.target.value;
         if (!/^\d*$/.test(valor)) {
@@ -123,71 +123,66 @@ const Register = () => {
     };
 
     return (
-        <div
-            className="container"
-            style={{ maxWidth: "450px", marginTop: "50px" }}
-        >
-            <h1 className="text-center mb-3">REGISTRO</h1>
+        <div className="register-container">
+            <div className="register-card">
+                <h1>Registro</h1>
 
-            {/* 🔹 Alerta general */}
-            {alerta && (
-                <div
-                    className={`alert alert-${alerta.tipo}`}
-                    role="alert"
-                    style={{ textAlign: "center" }}
-                >
-                    {alerta.mensaje}
+                {alerta && (
+                    <div
+                        className={`alert alert-${alerta.tipo}`}
+                        role="alert"
+                        style={{ textAlign: "center" }}
+                    >
+                        {alerta.mensaje}
+                    </div>
+                )}
+
+                <form onSubmit={submitRegister}>
+                    <input
+                        type="text"
+                        placeholder="DNI (8 dígitos)"
+                        value={dni}
+                        onChange={handleDniChange}
+                        required
+                    />
+                    <input
+                        type="text"
+                        placeholder="Nombre"
+                        value={nombre}
+                        onChange={handleNombreChange}
+                        required
+                    />
+                    <input
+                        type="text"
+                        placeholder="Apellido"
+                        value={apellido}
+                        onChange={handleApellidoChange}
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="Contraseña (mínimo 6 caracteres)"
+                        value={password}
+                        onChange={handlePasswordChange}
+                        required
+                    />
+                    <select
+                        value={rol}
+                        onChange={(e) => setRol(e.target.value)}
+                        required
+                    >
+                        <option value="">Selecciona un rol</option>
+                        <option value="estudiante">Estudiante</option>
+                        <option value="docente">Docente</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button type="submit">Registrar</button>
+                </form>
+
+                <div className="register-footer">
+                    ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
                 </div>
-            )}
-
-            <form onSubmit={submitRegister}>
-                <input
-                    type="text"
-                    placeholder="DNI (8 dígitos)"
-                    className="form-control mb-2"
-                    value={dni}
-                    onChange={handleDniChange}
-                    required
-                />
-                <input
-                    type="text"
-                    placeholder="Nombre"
-                    className="form-control mb-2"
-                    value={nombre}
-                    onChange={handleNombreChange}
-                    required
-                />
-                <input
-                    type="text"
-                    placeholder="Apellido"
-                    className="form-control mb-2"
-                    value={apellido}
-                    onChange={handleApellidoChange}
-                    required
-                />
-                <input
-                    type="password"
-                    placeholder="Contraseña (mínimo 6 caracteres)"
-                    className="form-control mb-2"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    required
-                />
-                <select
-                    className="form-control mb-3"
-                    value={rol}
-                    onChange={(e) => setRol(e.target.value)}
-                    required
-                >
-                    <option value="">Selecciona un rol</option>
-                    <option value="estudiante">Estudiante</option>
-                    <option value="docente">Docente</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <button type="submit" className="btn btn-primary w-100">
-                    Registrar
-                </button>
-            </form>
+            </div>
         </div>
     );
 };

@@ -1,65 +1,49 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import AuthUser from "../pageauth/AuthUser";
+import "../styles/Navbar.css"; // Asegúrate de importar tu CSS
 
 const Navbar = () => {
     const { getToken, logout } = AuthUser();
 
     const logoutUser = () => {
-        logout(); // Ejecuta la función de AuthUser
+        logout();
     };
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-light bg-light">
-            <div className="container-fluid">
-                {/* Nombre del sistema y logo a la izquierda */}
+        <nav className="navbar">
+            {/* 🔹 Logo y nombre del sistema */}
+            <div className="navbar-logo">
                 <Link
-                    className="navbar-brand d-flex align-items-center"
                     to="/login"
+                    style={{ textDecoration: "none", color: "inherit" }}
                 >
                     <img
-                        src="/img/logo.png" // ⚡ ruta de la imagen
+                        src="/img/logo.jpg"
                         alt="Logo"
-                        width="40" // Ajusta el tamaño a tu gusto
-                        height="40"
-                        className="me-2"
+                        width="36"
+                        height="36"
+                        style={{
+                            verticalAlign: "middle",
+                            marginRight: "8px",
+                            borderRadius: "8px",
+                        }}
                     />
-                    TRILENIUM SYSTEM INTERNATIONAL
+                    TRILENIUM
                 </Link>
+            </div>
 
-                <button
-                    className="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav"
-                    aria-controls="navbarNav"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation"
-                >
-                    <span className="navbar-toggler-icon"></span>
-                </button>
-
-                {/* Login/Logout a la derecha */}
-                <div className="collapse navbar-collapse" id="navbarNav">
-                    <ul className="navbar-nav ms-auto">
-                        {getToken() ? (
-                            <li className="nav-item">
-                                <button
-                                    className="btn btn-link nav-link"
-                                    onClick={logoutUser}
-                                >
-                                    Logout
-                                </button>
-                            </li>
-                        ) : (
-                            <li className="nav-item">
-                                <Link className="nav-link" to="/login">
-                                    Login
-                                </Link>
-                            </li>
-                        )}
-                    </ul>
-                </div>
+            {/* 🔹 Enlaces */}
+            <div className="nav-links">
+                {getToken() ? (
+                    <button className="nav-btn" onClick={logoutUser}>
+                        Logout
+                    </button>
+                ) : (
+                    <Link to="/login" className="nav-link">
+                        Login
+                    </Link>
+                )}
             </div>
         </nav>
     );

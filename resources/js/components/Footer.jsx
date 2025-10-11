@@ -7,7 +7,7 @@ const Footer = () => {
                 {/* Logo o nombre del sistema */}
                 <div className="mb-2 mb-md-0 d-flex align-items-center">
                     <img
-                        src="/img/logo.png"
+                        src="/img/logo.jpg"
                         alt="Logo"
                         width="40"
                         height="40"

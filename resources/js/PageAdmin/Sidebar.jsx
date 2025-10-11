@@ -1,19 +1,19 @@
 // Sidebar.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
+import "../styles/sidebar.css"; // Importamos tus estilos globales
 
 const Sidebar = () => {
     return (
-        <div className="col-sm-3">
-            <div className="list-group">
-                {/* Solo Administrar Usuarios */}
-                <NavLink
-                    to="/admin/usuarios"
-                    className="list-group-item list-group-item-action"
-                >
-                    Administrar Usuarios
-                </NavLink>
-            </div>
+        <div className="sidebar">
+            <h3>Panel Admin</h3>
+            <NavLink
+                to="/admin/usuarios"
+                className={({ isActive }) => (isActive ? "active" : "")}
+            >
+                Administrar Usuarios
+            </NavLink>
+            {/* Aquí puedes añadir más enlaces de administración */}
         </div>
     );
 };

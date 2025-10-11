@@ -1,0 +1,211 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    font-family: "Poppins", sans-serif;
+    overflow: hidden;
+}
+
+/* 🔥 Fondo animado completo */
+.login-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at top left, #b71c1c, #000000 70%);
+    animation: gradientMove 10s ease infinite alternate;
+    overflow: hidden;
+    z-index: 0;
+}
+
+@keyframes gradientMove {
+    0% {
+        background: radial-gradient(circle at top left, #ff4444, #330000 70%);
+    }
+    100% {
+        background: radial-gradient(
+            circle at bottom right,
+            #b71c1c,
+            #000000 70%
+        );
+    }
+}
+
+/* 💠 Tarjeta del login con más contraste */
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.12); /* más claro para resaltar */
+    backdrop-filter: blur(20px) saturate(160%);
+    border-radius: 18px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 70, 70, 0.3);
+    width: 100%;
+    max-width: 420px;
+    transition: all 0.4s ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.login-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    padding: 1px;
+    background: linear-gradient(
+        145deg,
+        rgba(255, 90, 90, 0.7),
+        rgba(255, 255, 255, 0.05)
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.login-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 25px 80px rgba(255, 50, 50, 0.5),
+        0 0 20px rgba(255, 80, 80, 0.4);
+}
+
+/* 🩶 Título */
+.login-card h1 {
+    font-size: 1.9rem;
+    text-align: center;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1.8rem;
+    letter-spacing: 1px;
+}
+
+/* Inputs */
+.login-card input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.login-card input::placeholder {
+    color: #ccc;
+}
+
+.login-card input:focus {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 12px rgba(255, 77, 77, 0.7);
+}
+
+/* Botón principal */
+.btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, #ff4b4b, #b71c1c);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-login:hover {
+    background: linear-gradient(135deg, #ff6f6f, #d50000);
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(255, 90, 90, 0.6);
+}
+
+/* Sección de registro */
+.register-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #ddd;
+    font-size: 0.9rem;
+}
+
+.btn-register {
+    background: none;
+    border: 1px solid #ff4b4b;
+    color: #ff4b4b;
+    padding: 8px 18px;
+    border-radius: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-register:hover {
+    background: #ff4b4b;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+}
+
+/* Alertas */
+.alert {
+    margin-bottom: 1.2rem;
+    text-align: center;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 500;
+    animation: fadeIn 0.5s ease;
+}
+
+.alert-danger {
+    background: rgba(255, 77, 77, 0.2);
+    border: 1px solid #ff4b4b;
+    color: #ffbaba;
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.2);
+    border: 1px solid #ffc107;
+    color: #ffe082;
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid #4caf50;
+    color: #b9f6ca;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Footer */
+.login-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: #888;
+}

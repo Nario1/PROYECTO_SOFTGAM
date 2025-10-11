@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
+import SidebarEstudiante from "./SidebarEstudiante"; // Asegúrate que exista
+import "../styles/docente.css"; // estilos generales
 
 const ActividadAsignada = () => {
     const { getUserId } = AuthUser();
@@ -31,7 +33,6 @@ const ActividadAsignada = () => {
         fetchActividades();
     }, [studentId]);
 
-    // Seleccionar actividad para entrega
     const seleccionarActividad = (actividad) => {
         setActividadSeleccionada(actividad);
         setTextoEntrega(actividad.texto_entrega || "");
@@ -39,12 +40,10 @@ const ActividadAsignada = () => {
         setMensaje(null);
     };
 
-    // Manejar archivo de entrega
     const handleArchivoChange = (e) => {
         setArchivoEntrega(e.target.files[0]);
     };
 
-    // Enviar entrega
     const enviarEntrega = async (e) => {
         e.preventDefault();
         if (!actividadSeleccionada) return;
@@ -62,7 +61,6 @@ const ActividadAsignada = () => {
                     texto: "Entrega enviada correctamente",
                 });
 
-                // Actualizar actividad localmente
                 const updatedActividades = actividades.map((act) =>
                     act.id === actividadSeleccionada.id
                         ? {
@@ -72,7 +70,7 @@ const ActividadAsignada = () => {
                                   archivoEntrega?.name || act.archivo_entrega,
                               archivo_url:
                                   res.data.data.archivo_url || act.archivo_url,
-                              asignacion_id: res.data.data.asignacion_id, // importante para descarga
+                              asignacion_id: res.data.data.asignacion_id,
                           }
                         : act
                 );
@@ -91,158 +89,200 @@ const ActividadAsignada = () => {
     };
 
     return (
-        <div className="actividad-asignada">
-            <h2>Mis Actividades Asignadas</h2>
+        <div
+            className="admin-container d-flex"
+            style={{ minHeight: "100vh", background: "#111" }}
+        >
+            {/* Sidebar */}
+            <SidebarEstudiante />
 
-            {mensaje && (
-                <p
-                    style={{
-                        color: mensaje.tipo === "error" ? "red" : "green",
-                        fontWeight: "bold",
-                    }}
-                >
-                    {mensaje.texto}
-                </p>
-            )}
-
-            <table
-                border="1"
-                cellPadding="8"
-                style={{ width: "100%", marginTop: "20px" }}
+            {/* Contenido principal */}
+            <div
+                className="admin-content flex-grow-1 overflow-y-auto p-6"
+                style={{ maxHeight: "calc(100vh - 2rem)" }}
             >
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Temática</th>
-                        <th>Docente</th>
-                        <th>Fecha límite</th>
-                        <th>Material</th>
-                        <th>Estado entrega</th>
-                        <th>Archivo entregado</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {actividades.map((act) => (
-                        <tr key={act.id}>
-                            <td>{act.titulo}</td>
-                            <td>{act.tematica_nombre}</td>
-                            <td>{act.docente_nombre}</td>
-                            <td
-                                style={{
-                                    color:
-                                        new Date(act.fecha_limite) < new Date()
-                                            ? "red"
-                                            : "black",
-                                }}
-                            >
-                                {act.fecha_limite || "-"}
-                            </td>
-                            <td>
-                                {act.archivo_material ? (
-                                    <a
-                                        href={`${window.location.origin}/storage/${act.archivo_material}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Descargar
-                                    </a>
-                                ) : (
-                                    "-"
-                                )}
-                            </td>
-                            <td>
-                                {act.texto_entrega || act.archivo_entrega
-                                    ? "Entregado"
-                                    : "Pendiente"}
-                            </td>
-                            <td>
-                                {act.archivo_entrega ? (
-                                    <a
-                                        href={
-                                            act.archivo_url ||
-                                            `${window.location.origin}/storage/${act.archivo_entrega}`
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {act.archivo_entrega}
-                                    </a>
-                                ) : (
-                                    "-"
-                                )}
-                            </td>
-                            <td>
-                                <button
-                                    onClick={() => seleccionarActividad(act)}
-                                >
-                                    Entregar / Ver
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                <h2 className="text-2xl font-bold text-white mb-4">
+                    Mis Actividades Asignadas
+                </h2>
 
-            {actividadSeleccionada && (
-                <div
-                    style={{
-                        marginTop: "30px",
-                        border: "1px solid #ccc",
-                        padding: "20px",
-                    }}
-                >
-                    <h3>Enviar entrega: {actividadSeleccionada.titulo}</h3>
+                {mensaje && (
+                    <p
+                        className={
+                            mensaje.tipo === "error"
+                                ? "text-danger"
+                                : "text-success"
+                        }
+                    >
+                        {mensaje.texto}
+                    </p>
+                )}
 
-                    {actividadSeleccionada.descripcion && (
-                        <div
-                            style={{
-                                marginBottom: "15px",
-                                padding: "10px",
-                                background: "#f9f9f9",
-                                borderRadius: "5px",
-                            }}
-                        >
-                            <strong>Descripción:</strong>
-                            <p>{actividadSeleccionada.descripcion}</p>
-                        </div>
-                    )}
-
-                    <form onSubmit={enviarEntrega}>
-                        <div style={{ marginBottom: "10px" }}>
-                            <label>Texto de entrega:</label>
-                            <textarea
-                                value={textoEntrega}
-                                onChange={(e) =>
-                                    setTextoEntrega(e.target.value)
-                                }
-                                rows={4}
-                                style={{ width: "100%" }}
-                            />
-                        </div>
-                        <div style={{ marginBottom: "10px" }}>
-                            <label>Archivo (opcional):</label>
-                            <input type="file" onChange={handleArchivoChange} />
-                            {actividadSeleccionada.archivo_entrega && (
-                                <p>
-                                    Archivo entregado previamente:{" "}
-                                    <a
-                                        href={
-                                            actividadSeleccionada.archivo_url ||
-                                            `${window.location.origin}/storage/${actividadSeleccionada.archivo_entrega}`
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                <div className="overflow-x-auto mb-6">
+                    <table className="min-w-full bg-black text-white border border-gray-600">
+                        <thead className="bg-gray-800">
+                            <tr>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Título
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Temática
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Docente
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Fecha límite
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Material
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Estado entrega
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Archivo entregado
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Acción
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {actividades.map((act) => (
+                                <tr key={act.id} className="hover:bg-gray-900">
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.titulo}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.tematica_nombre}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.docente_nombre}
+                                    </td>
+                                    <td
+                                        className={`py-2 px-4 border border-gray-600 ${
+                                            new Date(act.fecha_limite) <
+                                            new Date()
+                                                ? "text-danger"
+                                                : ""
+                                        }`}
                                     >
-                                        {actividadSeleccionada.archivo_entrega}
-                                    </a>
-                                </p>
-                            )}
-                        </div>
-                        <button type="submit">Enviar Entrega</button>
-                    </form>
+                                        {act.fecha_limite || "-"}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.archivo_material ? (
+                                            <a
+                                                href={`${window.location.origin}/storage/${act.archivo_material}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-500 underline"
+                                            >
+                                                Descargar
+                                            </a>
+                                        ) : (
+                                            "-"
+                                        )}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.texto_entrega ||
+                                        act.archivo_entrega
+                                            ? "Entregado"
+                                            : "Pendiente"}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.archivo_entrega ? (
+                                            <a
+                                                href={
+                                                    act.archivo_url ||
+                                                    `${window.location.origin}/storage/${act.archivo_entrega}`
+                                                }
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-500 underline"
+                                            >
+                                                {act.archivo_entrega}
+                                            </a>
+                                        ) : (
+                                            "-"
+                                        )}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        <button
+                                            className="admin-btn text-sm"
+                                            onClick={() =>
+                                                seleccionarActividad(act)
+                                            }
+                                        >
+                                            Entregar / Ver
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+
+                {actividadSeleccionada && (
+                    <div className="admin-card p-6 mb-6">
+                        <h3 className="text-lg font-semibold mb-4">
+                            Enviar entrega: {actividadSeleccionada.titulo}
+                        </h3>
+
+                        {actividadSeleccionada.descripcion && (
+                            <div className="p-3 bg-gray-800 rounded mb-4">
+                                <strong>Descripción:</strong>
+                                <p>{actividadSeleccionada.descripcion}</p>
+                            </div>
+                        )}
+
+                        <form
+                            onSubmit={enviarEntrega}
+                            className="flex flex-col gap-4"
+                        >
+                            <div>
+                                <label>Texto de entrega:</label>
+                                <textarea
+                                    value={textoEntrega}
+                                    onChange={(e) =>
+                                        setTextoEntrega(e.target.value)
+                                    }
+                                    rows={4}
+                                    className="admin-textarea"
+                                />
+                            </div>
+                            <div>
+                                <label>Archivo (opcional):</label>
+                                <input
+                                    type="file"
+                                    onChange={handleArchivoChange}
+                                    className="admin-input"
+                                />
+                                {actividadSeleccionada.archivo_entrega && (
+                                    <p>
+                                        Archivo entregado previamente:{" "}
+                                        <a
+                                            href={
+                                                actividadSeleccionada.archivo_url ||
+                                                `${window.location.origin}/storage/${actividadSeleccionada.archivo_entrega}`
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 underline"
+                                        >
+                                            {
+                                                actividadSeleccionada.archivo_entrega
+                                            }
+                                        </a>
+                                    </p>
+                                )}
+                            </div>
+                            <button type="submit" className="admin-btn w-full">
+                                Enviar Entrega
+                            </button>
+                        </form>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

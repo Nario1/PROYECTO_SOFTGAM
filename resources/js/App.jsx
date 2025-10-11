@@ -27,10 +27,6 @@ import UserAll from "./pageadmin/UserAll";
 import CRUDAdmin from "./pageadmin/CRUDAdmin";
 import CrearUsuario from "./pageadmin/CrearUsuario";
 
-// ✅ Importar las nuevas páginas
-import UsoAdmin from "./pageadmin/UsoAdmin";
-import ReportesAdmin from "./pageadmin/ReportesAdmin";
-
 // App - Estudiante
 import DashboardEstudiante from "./PageEstudiante/PerfilEstudiante";
 import JuegosEstudiante from "./pageestudiante/JuegoEstudiante";

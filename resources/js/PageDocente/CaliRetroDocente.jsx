@@ -1,6 +1,9 @@
+// CaliRetroDocente.jsx
 import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
+import "../styles/docente.css"; // Estilos oscuros ya definidos
+import SidebarDocente from "./SidebarDocente"; // 🔹 Sidebar añadido
 
 const CaliRetroDocente = () => {
     const { getUserId } = AuthUser();
@@ -65,7 +68,6 @@ const CaliRetroDocente = () => {
                 texto: "Ingresa una calificación",
             });
         }
-
         try {
             await Config.ActualizarRetroalimentacion(
                 actividadSeleccionada.id,
@@ -75,18 +77,15 @@ const CaliRetroDocente = () => {
                     retroalimentacion: ent.retroalimentacion || "",
                 }
             );
-
             setMensaje({
                 tipo: "success",
                 texto: "Retroalimentación guardada correctamente",
             });
 
-            // Actualizar estado local
             setEntregas((prev) =>
                 prev.map((e) => (e.id === ent.id ? { ...e, ...ent } : e))
             );
 
-            // Limpiar mensaje después de 3s
             setTimeout(() => setMensaje(null), 3000);
         } catch (err) {
             console.error(err);
@@ -108,145 +107,214 @@ const CaliRetroDocente = () => {
     };
 
     return (
-        <div>
-            <h2>Calificación y Retroalimentación</h2>
+        <div className="admin-container flex">
+            {/* 🔹 Sidebar fijo */}
+            <SidebarDocente />
 
-            {mensaje && (
-                <p
-                    style={{
-                        color: mensaje.tipo === "error" ? "red" : "green",
-                        fontWeight: "bold",
-                    }}
-                >
-                    {mensaje.texto}
-                </p>
-            )}
-
-            {/* Lista de actividades */}
-            <table
-                border="1"
-                cellPadding="8"
-                style={{ width: "100%", marginBottom: "20px" }}
+            {/* 🔹 Contenido principal */}
+            <div
+                className="admin-content flex flex-col gap-6 p-6 overflow-y-auto w-full"
+                style={{ maxHeight: "100vh" }}
             >
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Temática</th>
-                        <th>Fecha límite</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {actividades.length > 0 ? (
-                        actividades.map((act) => (
-                            <tr key={`act-${act.id}`}>
-                                <td>{act.titulo}</td>
-                                <td>{act.tematica_nombre || "-"}</td>
-                                <td
-                                    style={{
-                                        color:
-                                            new Date(act.fecha_limite) <
-                                            new Date()
-                                                ? "red"
-                                                : "black",
-                                    }}
-                                >
-                                    {act.fecha_limite || "-"}
-                                </td>
-                                <td>
-                                    <button
-                                        onClick={() => handleVerEntregas(act)}
-                                    >
-                                        Ver Entregas
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan={4}>No hay actividades disponibles</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                <h2 className="text-3xl font-bold text-center mb-6 text-white">
+                    Calificación y Retroalimentación
+                </h2>
 
-            {/* Lista de entregas */}
-            {mostrarEntregas && (
-                <div>
-                    <h3>Entregas de: {actividadSeleccionada?.titulo}</h3>
-                    <table border="1" cellPadding="8" style={{ width: "100%" }}>
-                        <thead>
+                {mensaje && (
+                    <p
+                        className={
+                            mensaje.tipo === "error"
+                                ? "text-danger font-bold"
+                                : "text-success font-bold"
+                        }
+                    >
+                        {mensaje.texto}
+                    </p>
+                )}
+
+                {/* Tabla Actividades */}
+                <div className="admin-card overflow-auto max-h-[40vh]">
+                    <table className="min-w-full bg-black text-white">
+                        <thead className="bg-gray-900 sticky top-0">
                             <tr>
-                                <th>Estudiante</th>
-                                <th>Texto de entrega</th>
-                                <th>Archivo</th>
-                                <th>Fecha de entrega</th>
-                                <th>Calificación</th>
-                                <th>Retroalimentación</th>
-                                <th>Acciones</th>
+                                <th className="py-3 px-6 border border-gray-700">
+                                    Título
+                                </th>
+                                <th className="py-3 px-6 border border-gray-700">
+                                    Temática
+                                </th>
+                                <th className="py-3 px-6 border border-gray-700">
+                                    Fecha límite
+                                </th>
+                                <th className="py-3 px-6 border border-gray-700">
+                                    Acciones
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            {entregas.length > 0 ? (
-                                entregas.map((ent) => (
-                                    <tr key={`ent-${ent.id}`}>
-                                        <td>{ent.estudiante_nombre}</td>
-                                        <td>{ent.texto_entrega || "-"}</td>
-                                        <td>
-                                            {ent.archivo_entrega ? (
-                                                <a
-                                                    href={`/storage/${ent.archivo_entrega}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    Descargar
-                                                </a>
-                                            ) : (
-                                                "-"
-                                            )}
+                            {actividades.length > 0 ? (
+                                actividades.map((act) => (
+                                    <tr
+                                        key={`act-${act.id}`}
+                                        className="hover:bg-gray-800"
+                                    >
+                                        <td className="py-2 px-4 border border-gray-600">
+                                            {act.titulo}
                                         </td>
-                                        <td>{ent.fecha_entrega || "-"}</td>
-                                        <td>
-                                            <input
-                                                type="number"
-                                                name="calificacion"
-                                                value={ent.calificacion || ""}
-                                                onChange={(e) =>
-                                                    handleChange(e, ent.id)
-                                                }
-                                            />
+                                        <td className="py-2 px-4 border border-gray-600">
+                                            {act.tematica_nombre || "-"}
                                         </td>
-                                        <td>
-                                            <textarea
-                                                name="retroalimentacion"
-                                                value={
-                                                    ent.retroalimentacion || ""
-                                                }
-                                                onChange={(e) =>
-                                                    handleChange(e, ent.id)
-                                                }
-                                            />
+                                        <td
+                                            className={`py-2 px-4 border border-gray-600 ${
+                                                new Date(act.fecha_limite) <
+                                                new Date()
+                                                    ? "text-danger"
+                                                    : "text-white"
+                                            }`}
+                                        >
+                                            {act.fecha_limite || "-"}
                                         </td>
-                                        <td>
+                                        <td className="py-2 px-4 border border-gray-600">
                                             <button
+                                                className="admin-btn"
                                                 onClick={() =>
-                                                    handleGuardarRetro(ent)
+                                                    handleVerEntregas(act)
                                                 }
                                             >
-                                                Guardar
+                                                Ver Entregas
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={7}>No hay entregas todavía</td>
+                                    <td
+                                        colSpan={4}
+                                        className="text-center py-4"
+                                    >
+                                        No hay actividades disponibles
+                                    </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
-            )}
+
+                {/* Tabla Entregas */}
+                {mostrarEntregas && (
+                    <div className="admin-card overflow-auto max-h-[50vh] mt-4">
+                        <h3 className="text-xl font-bold text-white mb-4">
+                            Entregas de: {actividadSeleccionada?.titulo}
+                        </h3>
+                        <table className="min-w-full bg-black text-white">
+                            <thead className="bg-gray-900 sticky top-0">
+                                <tr>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Estudiante
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Texto de entrega
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Archivo
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Fecha de entrega
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Calificación
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Retroalimentación
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {entregas.length > 0 ? (
+                                    entregas.map((ent) => (
+                                        <tr
+                                            key={`ent-${ent.id}`}
+                                            className="hover:bg-gray-800"
+                                        >
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                {ent.estudiante_nombre}
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                {ent.texto_entrega || "-"}
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                {ent.archivo_entrega ? (
+                                                    <a
+                                                        href={`/storage/${ent.archivo_entrega}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-400 hover:underline"
+                                                    >
+                                                        Descargar
+                                                    </a>
+                                                ) : (
+                                                    "-"
+                                                )}
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                {ent.fecha_entrega || "-"}
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                <input
+                                                    type="number"
+                                                    name="calificacion"
+                                                    value={
+                                                        ent.calificacion || ""
+                                                    }
+                                                    onChange={(e) =>
+                                                        handleChange(e, ent.id)
+                                                    }
+                                                    className="admin-input bg-gray-700 text-white"
+                                                />
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                <textarea
+                                                    name="retroalimentacion"
+                                                    value={
+                                                        ent.retroalimentacion ||
+                                                        ""
+                                                    }
+                                                    onChange={(e) =>
+                                                        handleChange(e, ent.id)
+                                                    }
+                                                    className="admin-input bg-gray-700 text-white"
+                                                />
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                <button
+                                                    className="admin-btn"
+                                                    onClick={() =>
+                                                        handleGuardarRetro(ent)
+                                                    }
+                                                >
+                                                    Guardar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td
+                                            colSpan={7}
+                                            className="text-center py-4"
+                                        >
+                                            No hay entregas todavía
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

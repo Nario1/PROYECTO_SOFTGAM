@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
+import "../styles/docente.css";
+import "../styles/gamificacion.css";
 
 const niveles = [
     { id: 1, nombre: "Nivel 1", puntos: 0 },
@@ -24,6 +26,7 @@ const JuegoPatrones = () => {
     const [respuesta, setRespuesta] = useState("");
     const [mensaje, setMensaje] = useState("");
     const [loading, setLoading] = useState(false);
+    const [dragRespuesta, setDragRespuesta] = useState("");
 
     const calcularNivel = (totalPuntos) => {
         let actual = niveles[0];
@@ -60,14 +63,14 @@ const JuegoPatrones = () => {
         setInsignias(nuevas);
     };
 
-    const responder = async () => {
+    const responder = async (respuestaUsuario) => {
         const pregunta = preguntas[preguntaActual];
         if (!pregunta) return;
         const user = getUser();
         const userId = user?.id;
         if (!userId) return;
 
-        if (respuesta.trim() === pregunta.respuesta) {
+        if (respuestaUsuario.trim() === pregunta.respuesta) {
             const nuevosPuntos = puntos + 10;
             setPuntos(nuevosPuntos);
             setMensaje("✅ ¡Correcto!");
@@ -78,14 +81,11 @@ const JuegoPatrones = () => {
 
             try {
                 setLoading(true);
-                // 🔹 Guardar puntos en la base de datos usando AddPuntos
                 await Config.AddPuntos(
                     userId,
                     10,
                     "Respuesta correcta en el juego de patrones"
                 );
-
-                // 🔹 Recalcular insignias en backend
                 await Config.CheckInsignias(userId);
             } catch (error) {
                 console.error("Error al guardar los puntos:", error);
@@ -98,6 +98,7 @@ const JuegoPatrones = () => {
 
         setRespuesta("");
         setPreguntaActual((prev) => prev + 1);
+        setDragRespuesta("");
     };
 
     const fetchPuntosIniciales = async () => {
@@ -125,99 +126,111 @@ const JuegoPatrones = () => {
 
     const pregunta = preguntas[preguntaActual];
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-sm text-center space-y-6">
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                    🎮 Estado Actual del Juego
-                </h1>
+    /* Drag & Drop Handlers */
+    const handleDragStart = (e, valor) => {
+        e.dataTransfer.setData("text/plain", valor);
+    };
+    const handleDrop = (e) => {
+        e.preventDefault();
+        const valor = e.dataTransfer.getData("text/plain");
+        setDragRespuesta(valor);
+    };
+    const allowDrop = (e) => e.preventDefault();
 
-                <div className="grid grid-cols-1 gap-4">
-                    <div className="bg-yellow-50 rounded-2xl p-4 shadow-md">
-                        <h2 className="text-sm font-medium text-yellow-600">
-                            ⭐ Puntos
-                        </h2>
-                        <p className="text-2xl font-bold text-yellow-800">
-                            {puntos}
-                        </p>
+    return (
+        <div className="flex bg-gray-900 min-h-screen p-4">
+            <div className="flex flex-col w-full max-w-6xl mx-auto space-y-6">
+                {/* 🟡 Cards de progreso en fila */}
+                <div className="flex gap-4 justify-center">
+                    <div className="card-progreso text-center flex-1">
+                        <h2>⭐ Puntos</h2>
+                        <p className="puntos-animacion">{puntos}</p>
                     </div>
-                    <div className="bg-blue-50 rounded-2xl p-4 shadow-md">
-                        <h2 className="text-sm font-medium text-blue-600">
-                            📘 Nivel Actual
-                        </h2>
-                        <p className="text-xl font-semibold text-blue-800">
-                            {nivel?.nombre || "No definido"}
-                        </p>
+                    <div className="card-progreso text-center flex-1">
+                        <h2>📘 Nivel</h2>
+                        <p>{nivel?.nombre || "No definido"}</p>
                     </div>
-                    <div className="bg-green-50 rounded-2xl p-4 shadow-md">
-                        <h2 className="text-sm font-medium text-green-600">
-                            ⬆️ Siguiente Nivel
-                        </h2>
-                        <p className="text-xl font-semibold text-green-800">
-                            {siguienteNivel?.nombre || "No definido"}
-                        </p>
+                    <div className="card-progreso text-center flex-1">
+                        <h2>⬆️ Siguiente Nivel</h2>
+                        <p>{siguienteNivel?.nombre || "No definido"}</p>
                     </div>
                 </div>
 
-                <h2 className="text-xl font-bold text-gray-900 mt-4">
-                    🏅 Insignias del Nivel
-                </h2>
-                {insignias.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3">
-                        {insignias.map((insignia) => (
-                            <div
-                                key={insignia.id}
-                                className="bg-pink-50 rounded-xl p-3 shadow-sm text-left"
-                            >
-                                <h3 className="font-semibold text-pink-600">
-                                    {insignia.nombre}
-                                </h3>
-                                <p className="text-sm text-gray-700">
-                                    {insignia.descripcion}
-                                </p>
+                {/* 🎯 Card del juego */}
+                <div className="card-juego p-6 space-y-4">
+                    {/* Insignias */}
+                    <div className="card-insignias">
+                        <h2 className="text-xl font-bold mb-2">🏅 Insignias</h2>
+                        {insignias.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2">
+                                {insignias.map((i) => (
+                                    <div key={i.id} className="insignia-card">
+                                        <h3>{i.nombre}</h3>
+                                        <p>{i.descripcion}</p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-gray-500">
-                        Aún no tienes insignias en este nivel.
-                    </p>
-                )}
-
-                {pregunta ? (
-                    <div className="mt-6">
-                        <p className="text-lg font-semibold text-gray-800 mb-2">
-                            Pregunta: {pregunta.texto}
-                        </p>
-                        <input
-                            type="text"
-                            className="border border-gray-300 rounded-lg p-2 w-full text-center"
-                            placeholder="Tu respuesta"
-                            value={respuesta}
-                            onChange={(e) => setRespuesta(e.target.value)}
-                        />
-                        <button
-                            onClick={responder}
-                            disabled={loading}
-                            className={`w-full mt-3 py-2 rounded-full font-semibold text-white ${
-                                loading
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-indigo-600 hover:bg-indigo-700"
-                            }`}
-                        >
-                            {loading ? "Guardando..." : "Enviar"}
-                        </button>
-                        {mensaje && (
-                            <p className="mt-2 text-lg font-medium text-gray-800">
-                                {mensaje}
+                        ) : (
+                            <p className="text-gray-200">
+                                Aún no tienes insignias.
                             </p>
                         )}
                     </div>
-                ) : (
-                    <p className="text-lg text-gray-700 mt-4">
-                        🎉 ¡Has completado todas las preguntas!
-                    </p>
-                )}
+
+                    {/* Pregunta Drag & Drop */}
+                    {pregunta && (
+                        <div className="card-pregunta">
+                            <p className="mb-2 text-white font-semibold">
+                                Pregunta: {pregunta.texto}
+                            </p>
+
+                            <div
+                                className="drop-zone mb-3"
+                                onDrop={handleDrop}
+                                onDragOver={allowDrop}
+                            >
+                                {dragRespuesta || "Arrastra tu respuesta aquí"}
+                            </div>
+
+                            <div className="flex space-x-2 justify-center mb-3 flex-wrap">
+                                {["5", "8", "10", "15", "20", "25"].map(
+                                    (num) => (
+                                        <div
+                                            key={num}
+                                            className="respuesta-draggable"
+                                            draggable
+                                            onDragStart={(e) =>
+                                                handleDragStart(e, num)
+                                            }
+                                        >
+                                            {num}
+                                        </div>
+                                    )
+                                )}
+                            </div>
+
+                            <button
+                                className="btn-gamificacion w-full"
+                                onClick={() => responder(dragRespuesta)}
+                                disabled={!dragRespuesta || loading}
+                            >
+                                {loading ? "Guardando..." : "Enviar"}
+                            </button>
+
+                            {mensaje && (
+                                <p className="mt-2 text-white font-bold">
+                                    {mensaje}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {!pregunta && (
+                        <p className="text-white text-center mt-4">
+                            🎉 ¡Has completado todas las preguntas!
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );

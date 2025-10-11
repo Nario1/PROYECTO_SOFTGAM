@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Config from "../Config";
 import AuthUser from "./AuthUser";
 import { useNavigate } from "react-router-dom";
+import "../styles/Login.css"; // Asegúrate de importar tu CSS
 
 const Login = () => {
     const { getToken, saveToken } = AuthUser();
@@ -19,7 +20,6 @@ const Login = () => {
         setTimeout(() => setAlerta(null), 4000);
     };
 
-    // 🔹 Validaciones en tiempo real
     const handleDniChange = (e) => {
         const valor = e.target.value;
         if (!/^\d*$/.test(valor)) {
@@ -70,9 +70,10 @@ const Login = () => {
                     saveToken(data.data.token, data.data.user);
 
                     const rol = data.data.user.rol;
-                    if (rol === "admin") navigate("/admin");
-                    else if (rol === "docente") navigate("/docente");
-                    else navigate("/estudiante");
+                    if (rol === "admin") navigate("/admin", { replace: true });
+                    else if (rol === "docente")
+                        navigate("/docente", { replace: true });
+                    else navigate("/estudiante", { replace: true });
                 } else {
                     mostrarAlerta(
                         "danger",
@@ -93,53 +94,48 @@ const Login = () => {
     };
 
     return (
-        <div
-            className="container"
-            style={{ maxWidth: "400px", marginTop: "50px" }}
-        >
-            <h1 className="text-center">LOGIN</h1>
+        <div className="login-container">
+            <div className="login-card">
+                <h1>Iniciar Sesión</h1>
 
-            {/* 🔹 Alerta visible arriba del formulario */}
-            {alerta && (
-                <div
-                    className={`alert alert-${alerta.tipo}`}
-                    role="alert"
-                    style={{ textAlign: "center" }}
-                >
-                    {alerta.mensaje}
+                {/* 🔹 Alertas visuales */}
+                {alerta && (
+                    <div className={`alert alert-${alerta.tipo}`}>
+                        {alerta.mensaje}
+                    </div>
+                )}
+
+                <form onSubmit={submitLogin}>
+                    <input
+                        type="text"
+                        placeholder="DNI"
+                        value={dni}
+                        onChange={handleDniChange}
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="Contraseña"
+                        value={password}
+                        onChange={handlePasswordChange}
+                        required
+                    />
+                    <button type="submit" className="btn-login">
+                        Ingresar
+                    </button>
+                </form>
+
+                <div className="register-text">
+                    <p>¿Primera vez aquí?</p>
+                    <button
+                        className="btn-register"
+                        onClick={() => navigate("/register")}
+                    >
+                        Regístrate
+                    </button>
                 </div>
-            )}
 
-            <form onSubmit={submitLogin}>
-                <input
-                    type="text"
-                    placeholder="DNI"
-                    className="form-control mb-2"
-                    value={dni}
-                    onChange={handleDniChange}
-                    required
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    className="form-control mb-2"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    required
-                />
-                <button type="submit" className="btn btn-success w-100 mb-3">
-                    Ingresar
-                </button>
-            </form>
-
-            <div className="text-center">
-                <p>¿Primera vez aquí?</p>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => navigate("/register")}
-                >
-                    Regístrate
-                </button>
+                <p className="login-footer">© 2025 Plataforma Educativa</p>
             </div>
         </div>
     );

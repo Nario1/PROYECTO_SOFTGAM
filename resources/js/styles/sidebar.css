@@ -1,0 +1,53 @@
+/* Sidebar.css */
+
+/* Contenedor general */
+.sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem 1rem;
+    border-radius: 0 15px 15px 0;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Título del sidebar */
+.sidebar h3 {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #e0e0ff;
+}
+
+/* Links del sidebar */
+.sidebar a {
+    display: block;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar a:hover {
+    background: rgba(94, 140, 255, 0.3);
+    transform: translateX(5px);
+    box-shadow: 0 0 15px rgba(94, 140, 255, 0.4);
+}
+
+.sidebar a.active {
+    background: rgba(94, 140, 255, 0.5);
+    box-shadow: 0 0 20px rgba(94, 140, 255, 0.6);
+}
+
+/* Para pantallas pequeñas */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+}

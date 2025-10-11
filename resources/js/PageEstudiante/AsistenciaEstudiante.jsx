@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import AuthUser from "../pageauth/AuthUser";
 import Config from "../Config";
+import SidebarEstudiante from "./SidebarEstudiante"; // Sidebar incluido
+import "../styles/docente.css"; // estilos generales
 
 const AsistenciaEstudiante = () => {
     const { getUserId } = AuthUser();
@@ -19,7 +21,6 @@ const AsistenciaEstudiante = () => {
             try {
                 const res = await Config.GetAsistenciaByEstudiante(studentId);
 
-                // 🧠 Validamos que res.data.data sea un array
                 if (res.data && Array.isArray(res.data.data)) {
                     setAsistencias(res.data.data);
                     setMensaje("");
@@ -43,56 +44,76 @@ const AsistenciaEstudiante = () => {
     }, [studentId]);
 
     return (
-        <div className="asistencia-estudiante" style={{ padding: "20px" }}>
-            <h2>📋 Mi Asistencia</h2>
+        <div className="admin-container d-flex" style={{ minHeight: "100vh" }}>
+            {/* Sidebar */}
+            <SidebarEstudiante />
 
-            {mensaje && (
-                <p style={{ color: "red", fontWeight: "bold" }}>{mensaje}</p>
-            )}
+            {/* Contenido principal */}
+            <div
+                className="admin-content flex-grow-1 overflow-y-auto p-6"
+                style={{ maxHeight: "calc(100vh - 2rem)" }}
+            >
+                <h2 className="text-2xl font-bold text-white mb-4">
+                    📋 Mi Asistencia
+                </h2>
 
-            {!mensaje && asistencias.length === 0 && (
-                <p>No tienes registros de asistencia.</p>
-            )}
+                {mensaje && (
+                    <p className="text-danger font-bold mb-4">{mensaje}</p>
+                )}
 
-            {asistencias.length > 0 && (
-                <table
-                    border="1"
-                    cellPadding="8"
-                    style={{
-                        width: "100%",
-                        marginTop: "20px",
-                        borderCollapse: "collapse",
-                        textAlign: "center",
-                    }}
-                >
-                    <thead style={{ background: "#f2f2f2" }}>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Docente</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {asistencias.map((asistencia) => (
-                            <tr key={asistencia.id}>
-                                <td>{asistencia.fecha}</td>
-                                <td>{asistencia.docente_nombre || "—"}</td>
-                                <td
-                                    style={{
-                                        color:
-                                            asistencia.estado === "Presente"
-                                                ? "green"
-                                                : "red",
-                                        fontWeight: "bold",
-                                    }}
-                                >
-                                    {asistencia.estado}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
+                {asistencias.length > 0 && (
+                    <div
+                        className="admin-card overflow-y-auto p-4"
+                        style={{ maxHeight: "70vh" }}
+                    >
+                        <table className="min-w-full bg-black text-white border border-gray-600">
+                            <thead className="bg-gray-800 sticky top-0">
+                                <tr>
+                                    <th className="py-2 px-4 border border-gray-600">
+                                        Fecha
+                                    </th>
+                                    <th className="py-2 px-4 border border-gray-600">
+                                        Docente
+                                    </th>
+                                    <th className="py-2 px-4 border border-gray-600">
+                                        Estado
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {asistencias.map((asistencia) => (
+                                    <tr
+                                        key={asistencia.id}
+                                        className="hover:bg-gray-900"
+                                    >
+                                        <td className="py-2 px-4 border border-gray-600">
+                                            {asistencia.fecha}
+                                        </td>
+                                        <td className="py-2 px-4 border border-gray-600">
+                                            {asistencia.docente_nombre || "—"}
+                                        </td>
+                                        <td
+                                            className={`py-2 px-4 border border-gray-600 font-bold ${
+                                                asistencia.estado === "Presente"
+                                                    ? "text-green-500"
+                                                    : "text-red-500"
+                                            }`}
+                                        >
+                                            {asistencia.estado}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {!mensaje && asistencias.length === 0 && (
+                    <p className="text-white">
+                        No tienes registros de asistencia.
+                    </p>
+                )}
+            </div>
         </div>
     );
 };

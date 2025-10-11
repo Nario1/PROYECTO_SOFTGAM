@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Config from "../Config";
+import SidebarEstudiante from "./SidebarEstudiante"; // sidebar
+import "../styles/docente.css"; // estilos generales
 
 const JuegosEstudiante = () => {
     const [juegos, setJuegos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [nivel, setNivel] = useState(1); // Nivel del estudiante
-    const [insignia, setInsignia] = useState(null); // Recompensa
+    const [nivel, setNivel] = useState(1);
+    const [insignia, setInsignia] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchJuegos = async () => {
             try {
-                const res = await Config.GetJuegos(); // Trae juegos desde Laravel
+                const res = await Config.GetJuegos();
 
                 if (
                     res?.data?.success &&
@@ -37,7 +39,6 @@ const JuegosEstudiante = () => {
                         ...juegosConNivel.map((j) => j.nivelCalculado)
                     );
                     setNivel(nivelMax);
-
                     setJuegos(juegosConNivel);
                 } else {
                     setError(
@@ -55,11 +56,6 @@ const JuegosEstudiante = () => {
         fetchJuegos();
     }, []);
 
-    if (loading)
-        return <div className="text-center mt-4">⏳ Cargando juegos...</div>;
-    if (error)
-        return <div className="text-center mt-4 text-danger">⚠️ {error}</div>;
-
     const handlePlay = (juego) => {
         const nombre = juego.nombre.toLowerCase();
 
@@ -73,70 +69,88 @@ const JuegosEstudiante = () => {
     };
 
     return (
-        <div className="container mt-4">
-            <h2 className="text-center mb-2">🎮 Juegos disponibles</h2>
-            <p className="text-center">
-                Nivel actual: <strong>{nivel}</strong>{" "}
-                {insignia && <span>{insignia}</span>}
-            </p>
+        <div
+            className="admin-container d-flex"
+            style={{ minHeight: "100vh", background: "#111" }}
+        >
+            {/* Sidebar */}
+            <SidebarEstudiante />
 
-            {juegos.length === 0 ? (
-                <p className="text-center">
-                    No hay juegos disponibles en este momento.
+            <div
+                className="admin-content flex-grow-1 overflow-y-auto p-6"
+                style={{ maxHeight: "calc(100vh - 2rem)" }}
+            >
+                <h2 className="text-2xl font-bold text-white mb-2 text-center">
+                    🎮 Juegos disponibles
+                </h2>
+                <p className="text-center text-white mb-4">
+                    Nivel actual: <strong>{nivel}</strong>{" "}
+                    {insignia && <span>{insignia}</span>}
                 </p>
-            ) : (
+
+                {loading && (
+                    <p className="text-center text-white">
+                        ⏳ Cargando juegos...
+                    </p>
+                )}
+                {error && <p className="text-center text-danger">⚠️ {error}</p>}
+
+                {!loading && !error && juegos.length === 0 && (
+                    <p className="text-center text-white">
+                        No hay juegos disponibles en este momento.
+                    </p>
+                )}
+
                 <div className="row">
                     {juegos.map((juego) => (
                         <div key={juego.id} className="col-md-4 mb-4">
-                            <div className="card h-100 shadow-sm">
+                            <div className="admin-card h-100 d-flex flex-column p-4 shadow-sm">
                                 <img
                                     src={
                                         juego.imagen
                                             ? `http://localhost:8000/storage/${juego.imagen}`
                                             : "https://via.placeholder.com/300x200?text=Sin+imagen"
                                     }
-                                    className="card-img-top"
                                     alt={juego.nombre || "Juego sin nombre"}
                                     style={{
+                                        width: "100%",
                                         height: "200px",
                                         objectFit: "cover",
+                                        borderRadius: "0.5rem",
+                                        marginBottom: "1rem",
                                     }}
                                 />
-                                <div className="card-body d-flex flex-column">
-                                    <h5 className="card-title text-center">
-                                        {juego.nombre}
-                                    </h5>
-                                    <p className="card-text">
-                                        {juego.descripcion || "Sin descripción"}
-                                    </p>
-                                    <p className="card-text">
-                                        <strong>Temática:</strong>{" "}
-                                        {juego.tematica?.nombre ||
-                                            "Sin temática"}
-                                    </p>
-                                    <p className="card-text">
-                                        <strong>Dificultad:</strong>{" "}
-                                        {juego.dificultad_promedio || 2}
-                                    </p>
-                                    <p className="card-text">
-                                        <strong>Puntos:</strong>{" "}
-                                        {juego.progreso?.puntos_totales || 0} |
-                                        <strong> Nivel:</strong>{" "}
-                                        {juego.nivelCalculado}
-                                    </p>
-
-                                    <button
-                                        className="btn btn-primary mt-auto w-100"
-                                        onClick={() => handlePlay(juego)}
-                                    >
-                                        🎯 Jugar ahora
-                                    </button>
-                                </div>
+                                <h5 className="text-white text-center mb-2">
+                                    {juego.nombre}
+                                </h5>
+                                <p className="text-white mb-1">
+                                    {juego.descripcion || "Sin descripción"}
+                                </p>
+                                <p className="text-white mb-1">
+                                    <strong>Temática:</strong>{" "}
+                                    {juego.tematica?.nombre || "Sin temática"}
+                                </p>
+                                <p className="text-white mb-1">
+                                    <strong>Dificultad:</strong>{" "}
+                                    {juego.dificultad_promedio || 2}
+                                </p>
+                                <p className="text-white mb-3">
+                                    <strong>Puntos:</strong>{" "}
+                                    {juego.progreso?.puntos_totales || 0} |{" "}
+                                    <strong>Nivel:</strong>{" "}
+                                    {juego.nivelCalculado}
+                                </p>
+                                <button
+                                    className="admin-btn mt-auto w-100"
+                                    onClick={() => handlePlay(juego)}
+                                >
+                                    🎯 Jugar ahora
+                                </button>
                             </div>
                         </div>
                     ))}
                 </div>
-            )}
+            </div>
         </div>
     );
 };

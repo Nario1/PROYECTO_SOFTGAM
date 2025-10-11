@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
+import SidebarDocente from "./SidebarDocente"; // 🔹 Agregado
+import "../styles/docente.css"; // Usa tu CSS existente
 
 const RecursosDocente = () => {
     const { getUserId } = AuthUser();
@@ -38,9 +40,8 @@ const RecursosDocente = () => {
         fetchData();
     }, [docenteId]);
 
-    const handleChange = (e) => {
+    const handleChange = (e) =>
         setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -123,7 +124,6 @@ const RecursosDocente = () => {
             if (formData.archivo) form.append("archivo", formData.archivo);
 
             const res = await Config.AddRecurso(form);
-
             if (res.data?.success) {
                 setMensaje({
                     tipo: "success",
@@ -205,53 +205,56 @@ const RecursosDocente = () => {
     };
 
     return (
-        <div className="container mt-4">
-            <h2>📘 Recursos del Docente</h2>
+        <div className="admin-container d-flex" style={{ minHeight: "100vh" }}>
+            {/* 🔹 Sidebar fijo al lado izquierdo */}
+            <SidebarDocente />
 
-            {mensaje && (
-                <p
-                    style={{
-                        color:
+            {/* 🔹 Contenido principal */}
+            <div
+                className="admin-content overflow-y-auto flex flex-col gap-6 p-6"
+                style={{ maxHeight: "100vh", flexGrow: 1 }}
+            >
+                <h2 className="text-2xl font-bold mb-4">
+                    📘 Recursos del Docente
+                </h2>
+
+                {mensaje && (
+                    <p
+                        className={`font-semibold ${
                             mensaje.tipo === "error"
-                                ? "red"
+                                ? "text-red-500"
                                 : mensaje.tipo === "success"
-                                ? "green"
-                                : "blue",
-                        fontWeight: "bold",
-                    }}
-                >
-                    {mensaje.texto}
-                </p>
-            )}
+                                ? "text-green-500"
+                                : "text-blue-500"
+                        }`}
+                    >
+                        {mensaje.texto}
+                    </p>
+                )}
 
-            {/* Formulario */}
-            <form onSubmit={handleSubmit} style={{ marginBottom: "25px" }}>
-                <div>
-                    <label>Título:</label>
+                {/* Formulario */}
+                <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <input
                         type="text"
                         name="titulo"
                         value={formData.titulo}
                         onChange={handleChange}
+                        placeholder="Título"
                         required
+                        className="admin-input"
                     />
-                </div>
-
-                <div>
-                    <label>Descripción:</label>
                     <textarea
                         name="descripcion"
                         value={formData.descripcion}
                         onChange={handleChange}
+                        placeholder="Descripción"
+                        className="admin-input"
                     />
-                </div>
-
-                <div>
-                    <label>Temática:</label>
                     <select
                         name="tematica_id"
                         value={formData.tematica_id}
                         onChange={handleChange}
+                        className="admin-input"
                     >
                         <option value="">-- Seleccionar Temática --</option>
                         {tematicas.map((t) => (
@@ -260,128 +263,161 @@ const RecursosDocente = () => {
                             </option>
                         ))}
                     </select>
-                </div>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            name="nueva_tematica"
+                            value={formData.nueva_tematica}
+                            onChange={handleChange}
+                            placeholder="Nueva temática"
+                            className="admin-input flex-1"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleCrearTematica}
+                            disabled={loadingTematica}
+                            className="admin-btn"
+                        >
+                            {loadingTematica ? "Creando..." : "Crear"}
+                        </button>
+                    </div>
 
-                <div>
-                    <label>Nueva temática:</label>
-                    <input
-                        type="text"
-                        name="nueva_tematica"
-                        value={formData.nueva_tematica}
-                        onChange={handleChange}
-                        placeholder="Escribe nueva temática"
-                    />
-                    <button
-                        type="button"
-                        onClick={handleCrearTematica}
-                        disabled={loadingTematica}
-                    >
-                        {loadingTematica ? "Creando..." : "Crear"}
-                    </button>
-                </div>
-
-                {formData.tipo === "enlace" ? (
-                    <div>
-                        <label>Enlace:</label>
+                    {formData.tipo === "enlace" ? (
                         <input
                             type="url"
                             name="enlace"
                             value={formData.enlace}
                             onChange={handleChange}
-                            placeholder="https://..."
+                            placeholder="Enlace"
+                            className="admin-input"
                         />
-                    </div>
-                ) : (
-                    <div>
-                        <label>Archivo:</label>
-                        <input type="file" onChange={handleFileChange} />
-                    </div>
-                )}
+                    ) : (
+                        <input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="admin-input"
+                        />
+                    )}
 
-                {preview && formData.tipo === "imagen" && (
-                    <div>
-                        <p>Vista previa:</p>
+                    {preview && formData.tipo === "imagen" && (
                         <img
                             src={preview}
                             alt="preview"
-                            style={{ maxWidth: "200px", borderRadius: "8px" }}
+                            className="max-w-xs rounded"
                         />
+                    )}
+
+                    <button type="submit" className="admin-btn w-full">
+                        Subir Recurso
+                    </button>
+                </form>
+
+                {/* Tabla */}
+                <h3 className="mt-6 mb-2">Mis Recursos</h3>
+                {recursos.length === 0 ? (
+                    <p>No has subido recursos todavía.</p>
+                ) : (
+                    <div
+                        className="overflow-y-auto border border-gray-600 rounded"
+                        style={{
+                            maxHeight: "400px",
+                            marginBottom: "2rem",
+                            paddingBottom: "1rem",
+                        }}
+                    >
+                        <table className="w-full border-collapse border border-gray-300 text-white">
+                            <thead className="bg-gray-800 sticky top-0 z-10">
+                                <tr>
+                                    <th className="border border-gray-600 p-2">
+                                        Título
+                                    </th>
+                                    <th className="border border-gray-600 p-2">
+                                        Temática
+                                    </th>
+                                    <th className="border border-gray-600 p-2">
+                                        Tipo
+                                    </th>
+                                    <th className="border border-gray-600 p-2">
+                                        Archivo / Enlace
+                                    </th>
+                                    <th className="border border-gray-600 p-2">
+                                        Visible
+                                    </th>
+                                    <th className="border border-gray-600 p-2">
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {recursos.map((r) => (
+                                    <tr
+                                        key={r.id}
+                                        className="hover:bg-gray-700"
+                                    >
+                                        <td className="border border-gray-600 p-2">
+                                            {r.titulo}
+                                        </td>
+                                        <td className="border border-gray-600 p-2">
+                                            {r.tematica?.nombre || "-"}
+                                        </td>
+                                        <td className="border border-gray-600 p-2">
+                                            {r.tipo}
+                                        </td>
+                                        <td className="border border-gray-600 p-2">
+                                            {r.tipo === "enlace" ? (
+                                                <a
+                                                    href={r.url_recurso}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    Ver enlace
+                                                </a>
+                                            ) : r.archivo_path ? (
+                                                <a
+                                                    href={`${window.location.origin}/storage/${r.archivo_path}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    Ver archivo
+                                                </a>
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </td>
+                                        <td className="border border-gray-600 p-2 text-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    r.visible_estudiantes ===
+                                                        1 ||
+                                                    r.visible_estudiantes ===
+                                                        true
+                                                }
+                                                onChange={(e) =>
+                                                    cambiarVisibilidad(
+                                                        r.id,
+                                                        e.target.checked
+                                                    )
+                                                }
+                                            />
+                                        </td>
+                                        <td className="border border-gray-600 p-2 text-center">
+                                            <button
+                                                onClick={() =>
+                                                    eliminarRecurso(r.id)
+                                                }
+                                                className="admin-btn admin-btn-danger px-2 py-1"
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
-
-                <button type="submit">Subir Recurso</button>
-            </form>
-
-            {/* Tabla */}
-            <h3>Mis Recursos</h3>
-            {recursos.length === 0 ? (
-                <p>No has subido recursos todavía.</p>
-            ) : (
-                <table border="1" cellPadding="8" width="100%">
-                    <thead>
-                        <tr>
-                            <th>Título</th>
-                            <th>Temática</th>
-                            <th>Tipo</th>
-                            <th>Archivo / Enlace</th>
-                            <th>Visible</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {recursos.map((r) => (
-                            <tr key={r.id}>
-                                <td>{r.titulo}</td>
-                                <td>{r.tematica?.nombre || "-"}</td>
-                                <td>{r.tipo}</td>
-                                <td>
-                                    {r.tipo === "enlace" ? (
-                                        <a
-                                            href={r.url_recurso}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            Ver enlace
-                                        </a>
-                                    ) : r.archivo_path ? (
-                                        <a
-                                            href={`${window.location.origin}/storage/${r.archivo_path}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            Ver archivo
-                                        </a>
-                                    ) : (
-                                        "-"
-                                    )}
-                                </td>
-                                <td>
-                                    <input
-                                        type="checkbox"
-                                        checked={
-                                            r.visible_estudiantes === 1 ||
-                                            r.visible_estudiantes === true
-                                        }
-                                        onChange={(e) =>
-                                            cambiarVisibilidad(
-                                                r.id,
-                                                e.target.checked
-                                            )
-                                        }
-                                    />
-                                </td>
-                                <td>
-                                    <button
-                                        onClick={() => eliminarRecurso(r.id)}
-                                    >
-                                        Eliminar
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
+            </div>
         </div>
     );
 };

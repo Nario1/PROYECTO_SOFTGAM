@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
+import "../styles/docente.css"; // estilos generales
+import SidebarDocente from "./SidebarDocente"; // 🔹 Sidebar añadido
 
 const AsignarActividad = () => {
     const { getUserId } = AuthUser();
@@ -25,7 +27,6 @@ const AsignarActividad = () => {
     const [verEntregas, setVerEntregas] = useState(false);
     const [entregas, setEntregas] = useState([]);
 
-    // Cargar temáticas, estudiantes y actividades del docente
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -50,7 +51,6 @@ const AsignarActividad = () => {
         fetchData();
     }, [docenteId]);
 
-    // Manejar inputs
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -117,10 +117,8 @@ const AsignarActividad = () => {
         }
     };
 
-    // Crear o actualizar actividad
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!formData.tematica_id)
             return setMensaje({
                 tipo: "error",
@@ -196,12 +194,12 @@ const AsignarActividad = () => {
         setFormData({
             titulo: actividad.titulo,
             descripcion: actividad.descripcion,
-            tematica_id: actividad.tematica_id?.toString() || "", // ✅ Convertir a string
+            tematica_id: actividad.tematica_id?.toString() || "",
             nueva_tematica: "",
             fecha_limite: actividad.fecha_limite,
             archivo_material: null,
             archivo_existente: actividad.archivo_material || null,
-            estudiantes_ids: actividad.estudiantes_ids?.map(String) || [], // también convertir IDs de estudiantes a string
+            estudiantes_ids: actividad.estudiantes_ids?.map(String) || [],
         });
         setMostrarFormulario(true);
         setVerEntregas(false);
@@ -245,133 +243,115 @@ const AsignarActividad = () => {
         }
     };
 
-    const descargarArchivo = async (actividad) => {
-        if (!actividad.archivo_material) return;
-        try {
-            const res = await Config.DescargarArchivo(actividad.id);
-            const url = window.URL.createObjectURL(new Blob([res.data]));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute(
-                "download",
-                actividad.archivo_material.split("/").pop()
-            );
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (err) {
-            console.error("Error al descargar archivo:", err);
-            alert("Error al descargar archivo");
-        }
-    };
-
     return (
-        <div className="asignar-actividad">
-            <h2>Actividades del Docente</h2>
-
-            {mensaje && (
-                <p
-                    style={{
-                        color: mensaje.tipo === "error" ? "red" : "green",
-                        fontWeight: "bold",
-                    }}
-                >
-                    {mensaje.texto}
-                </p>
-            )}
-
-            <button
-                onClick={() => {
-                    setMostrarFormulario(!mostrarFormulario);
-                    setActividadSeleccionada(null);
-                    setVerEntregas(false);
-                }}
+        <div className="admin-container">
+            <SidebarDocente /> {/* 🔹 Sidebar fijo añadido */}
+            <div
+                className="admin-content flex flex-col gap-6 overflow-y-auto"
+                style={{ maxHeight: "100vh" }}
             >
-                {mostrarFormulario ? "Cancelar" : "Agregar Nueva Actividad"}
-            </button>
+                <h2 className="text-2xl font-bold mb-4">
+                    Actividades del Docente
+                </h2>
 
-            {/* Formulario */}
-            {mostrarFormulario && (
-                <div
-                    style={{
-                        marginTop: "20px",
-                        border: "1px solid #ccc",
-                        padding: "20px",
+                {mensaje && (
+                    <p
+                        className={
+                            mensaje.tipo === "error"
+                                ? "text-danger"
+                                : "text-success"
+                        }
+                    >
+                        {mensaje.texto}
+                    </p>
+                )}
+
+                <button
+                    onClick={() => {
+                        setMostrarFormulario(!mostrarFormulario);
+                        setActividadSeleccionada(null);
+                        setVerEntregas(false);
                     }}
+                    className="admin-btn"
                 >
-                    <h3>
-                        {actividadSeleccionada
-                            ? "Editar Actividad"
-                            : "Nueva Actividad"}
-                    </h3>
-                    <form onSubmit={handleSubmit}>
-                        <div>
-                            <label>Título:</label>
+                    {mostrarFormulario ? "Cancelar" : "Agregar Nueva Actividad"}
+                </button>
+
+                {/* Formulario */}
+                {mostrarFormulario && (
+                    <div className="admin-card">
+                        <h3 className="text-lg font-semibold mb-4">
+                            {actividadSeleccionada
+                                ? "Editar Actividad"
+                                : "Nueva Actividad"}
+                        </h3>
+                        <form
+                            onSubmit={handleSubmit}
+                            className="flex flex-col gap-4"
+                        >
                             <input
                                 type="text"
                                 name="titulo"
                                 value={formData.titulo}
                                 onChange={handleChange}
+                                placeholder="Título"
+                                className="admin-input"
                                 required
                             />
-                        </div>
-                        <div>
-                            <label>Descripción:</label>
                             <textarea
                                 name="descripcion"
                                 value={formData.descripcion}
                                 onChange={handleChange}
-                            ></textarea>
-                        </div>
-                        <div>
-                            <label>Temática:</label>
+                                placeholder="Descripción"
+                                className="admin-textarea"
+                            />
                             <select
                                 name="tematica_id"
-                                value={formData.tematica_id} // ya es string desde editarActividad
+                                value={formData.tematica_id}
                                 onChange={handleChange}
+                                className="admin-input"
                             >
                                 <option value="">
                                     -- Seleccionar Temática --
                                 </option>
                                 {tematicas.map((t) => (
                                     <option key={t.id} value={t.id.toString()}>
-                                        {" "}
-                                        {/* ✅ Convertir value a string */}
                                         {t.nombre}
                                     </option>
                                 ))}
                             </select>
-                        </div>
 
-                        <div>
-                            <label>Crear nueva temática:</label>
-                            <input
-                                type="text"
-                                name="nueva_tematica"
-                                value={formData.nueva_tematica}
-                                onChange={handleChange}
-                                placeholder="Escribe nueva temática"
-                            />
-                            <button
-                                type="button"
-                                onClick={handleCrearTematica}
-                                disabled={loadingTematica}
-                            >
-                                {loadingTematica ? "Creando..." : "Crear"}
-                            </button>
-                        </div>
-                        <div>
-                            <label>Fecha límite:</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    name="nueva_tematica"
+                                    value={formData.nueva_tematica}
+                                    onChange={handleChange}
+                                    placeholder="Escribe nueva temática"
+                                    className="admin-input flex-1"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleCrearTematica}
+                                    className="admin-btn"
+                                    disabled={loadingTematica}
+                                >
+                                    {loadingTematica ? "Creando..." : "Crear"}
+                                </button>
+                            </div>
+
                             <input
                                 type="date"
                                 name="fecha_limite"
                                 value={formData.fecha_limite}
                                 onChange={handleChange}
+                                className="admin-input"
                             />
-                        </div>
-                        <div>
-                            <label>Archivo (opcional):</label>
-                            <input type="file" onChange={handleFileChange} />
+                            <input
+                                type="file"
+                                onChange={handleFileChange}
+                                className="admin-input"
+                            />
                             {formData.archivo_existente &&
                                 !formData.archivo_material && (
                                     <p>
@@ -380,19 +360,18 @@ const AsignarActividad = () => {
                                             href={`${window.location.origin}/storage/${formData.archivo_existente}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            className="text-blue-500 underline"
                                         >
                                             Abrir / Descargar
                                         </a>
                                     </p>
                                 )}
-                        </div>
 
-                        <div>
-                            <label>Asignar a estudiantes:</label>
                             <select
                                 multiple
                                 value={formData.estudiantes_ids}
                                 onChange={handleSelectEstudiante}
+                                className="admin-input"
                             >
                                 {estudiantes.map((est) => (
                                     <option key={est.id} value={est.id}>
@@ -403,133 +382,184 @@ const AsignarActividad = () => {
                                     </option>
                                 ))}
                             </select>
-                            <br />
-                            <button type="button" onClick={handleAsignarTodos}>
+                            <button
+                                type="button"
+                                onClick={handleAsignarTodos}
+                                className="admin-btn w-full"
+                            >
                                 Asignar a todos
                             </button>
-                        </div>
-                        <button type="submit">
-                            {actividadSeleccionada
-                                ? "Actualizar"
-                                : "Crear y Asignar"}
-                        </button>
-                    </form>
-                </div>
-            )}
 
-            {/* Lista de actividades */}
-            <table
-                border="1"
-                cellPadding="8"
-                style={{ width: "100%", marginTop: "20px" }}
-            >
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Temática</th>
-                        <th>Fecha límite</th>
-                        <th>Estudiantes asignados</th>
-                        <th>Material</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {actividades.map((act) => (
-                        <tr key={act.id}>
-                            <td>{act.titulo}</td>
-                            <td>{act.tematica_nombre}</td>
-                            <td
-                                style={{
-                                    color:
-                                        new Date(act.fecha_limite) < new Date()
-                                            ? "red"
-                                            : "black",
-                                }}
-                            >
-                                {act.fecha_limite || "-"}
-                            </td>
-                            <td>{act.estudiantes_count || 0}</td>
-                            <td>
-                                {act.archivo_material ? (
-                                    <a
-                                        href={`${window.location.origin}/storage/${act.archivo_material}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Abrir / Descargar
-                                    </a>
-                                ) : (
-                                    "-"
-                                )}
-                            </td>
-                            <td>
-                                <button onClick={() => editarActividad(act)}>
-                                    Editar
-                                </button>
-                                <button
-                                    onClick={() => eliminarActividad(act.id)}
-                                >
-                                    Eliminar
-                                </button>
-                                <button onClick={() => mostrarEntregas(act)}>
-                                    Ver entregas
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                            <button type="submit" className="admin-btn w-full">
+                                {actividadSeleccionada
+                                    ? "Actualizar"
+                                    : "Crear y Asignar"}
+                            </button>
+                        </form>
+                    </div>
+                )}
 
-            {/* Ver entregas */}
-            {verEntregas && (
-                <div
-                    style={{
-                        marginTop: "30px",
-                        border: "1px solid #ccc",
-                        padding: "20px",
-                    }}
-                >
-                    <h3>Entregas de: {actividadSeleccionada.titulo}</h3>
-                    <table border="1" cellPadding="8" style={{ width: "100%" }}>
-                        <thead>
+                {/* Lista de actividades */}
+                <div className="admin-card overflow-x-auto overflow-y-auto max-h-[60vh]">
+                    <table className="min-w-full bg-black text-white">
+                        <thead className="bg-gray-800">
                             <tr>
-                                <th>Estudiante</th>
-                                <th>Texto de entrega</th>
-                                <th>Archivo</th>
-                                <th>Fecha de entrega</th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Título
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Temática
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Fecha límite
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Estudiantes asignados
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Material
+                                </th>
+                                <th className="py-2 px-4 border border-gray-600">
+                                    Acciones
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            {entregas.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4}>No hay entregas todavía</td>
+                            {actividades.map((act) => (
+                                <tr
+                                    key={act.id}
+                                    className="hover:bg-gray-900 transition"
+                                >
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.titulo}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.tematica_nombre}
+                                    </td>
+                                    <td
+                                        className={`py-2 px-4 border border-gray-600 ${
+                                            new Date(act.fecha_limite) <
+                                            new Date()
+                                                ? "text-danger"
+                                                : ""
+                                        }`}
+                                    >
+                                        {act.fecha_limite || "-"}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.estudiantes_count || 0}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600">
+                                        {act.archivo_material ? (
+                                            <a
+                                                href={`${window.location.origin}/storage/${act.archivo_material}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-500 underline"
+                                            >
+                                                Abrir / Descargar
+                                            </a>
+                                        ) : (
+                                            "-"
+                                        )}
+                                    </td>
+                                    <td className="py-2 px-4 border border-gray-600 flex gap-1 flex-wrap">
+                                        <button
+                                            onClick={() => editarActividad(act)}
+                                            className="admin-btn text-sm"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                eliminarActividad(act.id)
+                                            }
+                                            className="admin-btn admin-btn-danger text-sm"
+                                        >
+                                            Eliminar
+                                        </button>
+                                        <button
+                                            onClick={() => mostrarEntregas(act)}
+                                            className="admin-btn text-sm"
+                                        >
+                                            Ver entregas
+                                        </button>
+                                    </td>
                                 </tr>
-                            ) : (
-                                entregas.map((e) => (
-                                    <tr key={e.id}>
-                                        <td>{e.estudiante_nombre}</td>
-                                        <td>{e.texto_entrega || "-"}</td>
-                                        <td>
-                                            {e.archivo_entrega ? (
-                                                <a
-                                                    href={`/storage/${e.archivo_entrega}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    Descargar
-                                                </a>
-                                            ) : (
-                                                "-"
-                                            )}
-                                        </td>
-                                        <td>{e.fecha_entrega || "-"}</td>
-                                    </tr>
-                                ))
-                            )}
+                            ))}
                         </tbody>
                     </table>
                 </div>
-            )}
+
+                {/* Modal de entregas */}
+                {verEntregas && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-16 z-50 overflow-auto">
+                        <div className="admin-card w-full max-w-3xl p-6 flex flex-col gap-4 overflow-y-auto max-h-[80vh]">
+                            <h3 className="text-lg font-semibold mb-4">
+                                Entregas de: {actividadSeleccionada.titulo}
+                            </h3>
+                            <table className="min-w-full bg-black text-white">
+                                <thead className="bg-gray-800">
+                                    <tr>
+                                        <th className="py-2 px-4 border border-gray-600">
+                                            Estudiante
+                                        </th>
+                                        <th className="py-2 px-4 border border-gray-600">
+                                            Texto de entrega
+                                        </th>
+                                        <th className="py-2 px-4 border border-gray-600">
+                                            Archivo
+                                        </th>
+                                        <th className="py-2 px-4 border border-gray-600">
+                                            Fecha de entrega
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {entregas.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan={4}
+                                                className="py-2 px-4 border border-gray-600 text-center"
+                                            >
+                                                No hay entregas todavía
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        entregas.map((e) => (
+                                            <tr key={e.id}>
+                                                <td className="py-2 px-4 border border-gray-600">
+                                                    {e.estudiante_nombre}
+                                                </td>
+                                                <td className="py-2 px-4 border border-gray-600">
+                                                    {e.texto_entrega || "-"}
+                                                </td>
+                                                <td className="py-2 px-4 border border-gray-600">
+                                                    {e.archivo_entrega ? (
+                                                        <a
+                                                            href={`/storage/${e.archivo_entrega}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-500 underline"
+                                                        >
+                                                            Descargar
+                                                        </a>
+                                                    ) : (
+                                                        "-"
+                                                    )}
+                                                </td>
+                                                <td className="py-2 px-4 border border-gray-600">
+                                                    {e.fecha_entrega || "-"}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
