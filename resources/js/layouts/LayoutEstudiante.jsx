@@ -16,6 +16,7 @@ const LayoutEstudiante = () => {
     }, []);
     return (
         <div>
+            <h1>ESTUDIANTE</h1>
             <Navbar />
             <Outlet />
             <Footer />
