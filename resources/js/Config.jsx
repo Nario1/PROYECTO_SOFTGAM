@@ -1,7 +1,7 @@
 // Config.jsx
 import axios from "axios";
 
-const base_api_url = "/api"; // ruta relativa al host actual
+const base_api_url = "/api";
 
 export default {
     // 🔹 Auth
