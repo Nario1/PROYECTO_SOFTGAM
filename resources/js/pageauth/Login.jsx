@@ -23,7 +23,7 @@ const Login = () => {
     const handleDniChange = (e) => {
         const valor = e.target.value;
         if (!/^\d*$/.test(valor)) {
-            mostrarAlerta("danger", "El DNI solo debe contener números.");
+            mostrarAlerta("danger", "El DNI solo debe contener númeross.");
             return;
         }
         if (valor.length > 8) {
