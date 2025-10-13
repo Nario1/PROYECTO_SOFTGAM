@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Prueba;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Prueba;
 
 class PruebaFactory extends Factory
 {
@@ -14,8 +14,6 @@ class PruebaFactory extends Factory
         return [
             'titulo' => $this->faker->sentence(3),
             'descripcion' => $this->faker->paragraph(),
-            'created_at' => now(),
-            'updated_at' => now(),
         ];
     }
 }

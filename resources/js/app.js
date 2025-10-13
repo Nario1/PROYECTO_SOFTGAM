@@ -13,3 +13,10 @@ import "./bootstrap";
  */
 
 import "./App.jsx";
+import "./styles/admin.css";
+import "./styles/docente.css";
+import "./styles/gamificacion.css";
+import "./styles/login.css";
+import "./styles/navbar.css";
+import "./styles/register.css";
+import "./styles/sidebar.css";

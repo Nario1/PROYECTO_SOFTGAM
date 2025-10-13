@@ -29,7 +29,7 @@ const Navbar = () => {
                             borderRadius: "8px",
                         }}
                     />
-                    TRILENIUM
+                    TRILENIUMMM
                 </Link>
             </div>
 

@@ -1,0 +1,3 @@
+protected $casts = [
+    'opciones' => 'array',
+];
