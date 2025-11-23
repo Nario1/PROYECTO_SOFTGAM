@@ -47,7 +47,16 @@ const CaliRetroDocente = () => {
                 const ents = Array.isArray(res.data.data)
                     ? res.data.data
                     : res.data.data?.entregas || [];
-                setEntregas(ents);
+
+                // 🔹 Asegurar que cada entrega tenga un ID único
+                const entregasConIdUnico = ents.map((ent, index) => ({
+                    ...ent,
+                    uniqueId:
+                        ent.id ||
+                        `ent-${ent.estudiante_id}-${actividad.id}-${index}`,
+                }));
+
+                setEntregas(entregasConIdUnico);
                 setActividadSeleccionada(actividad);
                 setMostrarEntregas(true);
             } else {
@@ -68,22 +77,39 @@ const CaliRetroDocente = () => {
                 texto: "Ingresa una calificación",
             });
         }
+
+        // Validar que la calificación sea un número válido
+        const calificacionNum = parseFloat(ent.calificacion);
+        if (
+            isNaN(calificacionNum) ||
+            calificacionNum < 0 ||
+            calificacionNum > 100
+        ) {
+            return setMensaje({
+                tipo: "error",
+                texto: "La calificación debe ser un número entre 0 y 100",
+            });
+        }
+
         try {
             await Config.ActualizarRetroalimentacion(
                 actividadSeleccionada.id,
                 ent.estudiante_id,
                 {
-                    calificacion: ent.calificacion,
+                    calificacion: calificacionNum,
                     retroalimentacion: ent.retroalimentacion || "",
                 }
             );
             setMensaje({
                 tipo: "success",
-                texto: "Retroalimentación guardada correctamente",
+                texto: `Retroalimentación guardada para ${ent.estudiante_nombre}`,
             });
 
+            // 🔹 CORRECCIÓN: Actualizar solo la entrega específica usando uniqueId
             setEntregas((prev) =>
-                prev.map((e) => (e.id === ent.id ? { ...e, ...ent } : e))
+                prev.map((e) =>
+                    e.uniqueId === ent.uniqueId ? { ...e, ...ent } : e
+                )
             );
 
             setTimeout(() => setMensaje(null), 3000);
@@ -97,13 +123,20 @@ const CaliRetroDocente = () => {
     };
 
     // Manejar cambios en calificación o retroalimentación
-    const handleChange = (e, entregaId) => {
+    const handleChange = (e, uniqueId) => {
         const { name, value } = e.target;
         setEntregas((prev) =>
             prev.map((ent) =>
-                ent.id === entregaId ? { ...ent, [name]: value } : ent
+                ent.uniqueId === uniqueId ? { ...ent, [name]: value } : ent
             )
         );
+    };
+
+    // Volver a la lista de actividades
+    const handleVolverActividades = () => {
+        setMostrarEntregas(false);
+        setActividadSeleccionada(null);
+        setEntregas([]);
     };
 
     return (
@@ -124,88 +157,99 @@ const CaliRetroDocente = () => {
                     <p
                         className={
                             mensaje.tipo === "error"
-                                ? "text-danger font-bold"
-                                : "text-success font-bold"
+                                ? "text-danger font-bold p-3 bg-red-900 rounded"
+                                : "text-success font-bold p-3 bg-green-900 rounded"
                         }
                     >
                         {mensaje.texto}
                     </p>
                 )}
 
-                {/* Tabla Actividades */}
-                <div className="admin-card overflow-auto max-h-[40vh]">
-                    <table className="min-w-full bg-black text-white">
-                        <thead className="bg-gray-900 sticky top-0">
-                            <tr>
-                                <th className="py-3 px-6 border border-gray-700">
-                                    Título
-                                </th>
-                                <th className="py-3 px-6 border border-gray-700">
-                                    Temática
-                                </th>
-                                <th className="py-3 px-6 border border-gray-700">
-                                    Fecha límite
-                                </th>
-                                <th className="py-3 px-6 border border-gray-700">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {actividades.length > 0 ? (
-                                actividades.map((act) => (
-                                    <tr
-                                        key={`act-${act.id}`}
-                                        className="hover:bg-gray-800"
-                                    >
-                                        <td className="py-2 px-4 border border-gray-600">
-                                            {act.titulo}
-                                        </td>
-                                        <td className="py-2 px-4 border border-gray-600">
-                                            {act.tematica_nombre || "-"}
-                                        </td>
-                                        <td
-                                            className={`py-2 px-4 border border-gray-600 ${
-                                                new Date(act.fecha_limite) <
-                                                new Date()
-                                                    ? "text-danger"
-                                                    : "text-white"
-                                            }`}
+                {/* Tabla Actividades - Solo mostrar cuando no se ven entregas */}
+                {!mostrarEntregas && (
+                    <div className="admin-card overflow-auto max-h-[40vh]">
+                        <table className="min-w-full bg-black text-white">
+                            <thead className="bg-gray-900 sticky top-0">
+                                <tr>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Título
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Temática
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Fecha límite
+                                    </th>
+                                    <th className="py-3 px-6 border border-gray-700">
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {actividades.length > 0 ? (
+                                    actividades.map((act) => (
+                                        <tr
+                                            key={`act-${act.id}`}
+                                            className="hover:bg-gray-800"
                                         >
-                                            {act.fecha_limite || "-"}
-                                        </td>
-                                        <td className="py-2 px-4 border border-gray-600">
-                                            <button
-                                                className="admin-btn"
-                                                onClick={() =>
-                                                    handleVerEntregas(act)
-                                                }
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                {act.titulo}
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                {act.tematica_nombre || "-"}
+                                            </td>
+                                            <td
+                                                className={`py-2 px-4 border border-gray-600 ${
+                                                    new Date(act.fecha_limite) <
+                                                    new Date()
+                                                        ? "text-danger"
+                                                        : "text-white"
+                                                }`}
                                             >
-                                                Ver Entregas
-                                            </button>
+                                                {act.fecha_limite || "-"}
+                                            </td>
+                                            <td className="py-2 px-4 border border-gray-600">
+                                                <button
+                                                    className="admin-btn"
+                                                    onClick={() =>
+                                                        handleVerEntregas(act)
+                                                    }
+                                                >
+                                                    Ver Entregas
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td
+                                            colSpan={4}
+                                            className="text-center py-4"
+                                        >
+                                            No hay actividades disponibles
                                         </td>
                                     </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan={4}
-                                        className="text-center py-4"
-                                    >
-                                        No hay actividades disponibles
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
                 {/* Tabla Entregas */}
                 {mostrarEntregas && (
-                    <div className="admin-card overflow-auto max-h-[50vh] mt-4">
-                        <h3 className="text-xl font-bold text-white mb-4">
-                            Entregas de: {actividadSeleccionada?.titulo}
-                        </h3>
+                    <div className="admin-card overflow-auto max-h-[70vh] mt-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-white">
+                                Entregas de: {actividadSeleccionada?.titulo}
+                            </h3>
+                            <button
+                                className="admin-btn bg-gray-600 hover:bg-gray-700"
+                                onClick={handleVolverActividades}
+                            >
+                                ← Volver a Actividades
+                            </button>
+                        </div>
+
                         <table className="min-w-full bg-black text-white">
                             <thead className="bg-gray-900 sticky top-0">
                                 <tr>
@@ -236,7 +280,8 @@ const CaliRetroDocente = () => {
                                 {entregas.length > 0 ? (
                                     entregas.map((ent) => (
                                         <tr
-                                            key={`ent-${ent.id}`}
+                                            // 🔹 CORRECCIÓN: Usar uniqueId como key único
+                                            key={ent.uniqueId}
                                             className="hover:bg-gray-800"
                                         >
                                             <td className="py-2 px-4 border border-gray-600">
@@ -269,10 +314,18 @@ const CaliRetroDocente = () => {
                                                     value={
                                                         ent.calificacion || ""
                                                     }
+                                                    // 🔹 CORRECCIÓN: Usar uniqueId para identificar cada entrega
                                                     onChange={(e) =>
-                                                        handleChange(e, ent.id)
+                                                        handleChange(
+                                                            e,
+                                                            ent.uniqueId
+                                                        )
                                                     }
-                                                    className="admin-input bg-gray-700 text-white"
+                                                    className="admin-input bg-gray-700 text-white w-20"
+                                                    min="0"
+                                                    max="100"
+                                                    step="0.1"
+                                                    placeholder="0-100"
                                                 />
                                             </td>
                                             <td className="py-2 px-4 border border-gray-600">
@@ -282,15 +335,21 @@ const CaliRetroDocente = () => {
                                                         ent.retroalimentacion ||
                                                         ""
                                                     }
+                                                    // 🔹 CORRECCIÓN: Usar uniqueId para identificar cada entrega
                                                     onChange={(e) =>
-                                                        handleChange(e, ent.id)
+                                                        handleChange(
+                                                            e,
+                                                            ent.uniqueId
+                                                        )
                                                     }
-                                                    className="admin-input bg-gray-700 text-white"
+                                                    className="admin-input bg-gray-700 text-white w-48"
+                                                    rows="3"
+                                                    placeholder="Escribe la retroalimentación individual aquí..."
                                                 />
                                             </td>
                                             <td className="py-2 px-4 border border-gray-600">
                                                 <button
-                                                    className="admin-btn"
+                                                    className="admin-btn bg-green-600 hover:bg-green-700"
                                                     onClick={() =>
                                                         handleGuardarRetro(ent)
                                                     }
@@ -306,12 +365,21 @@ const CaliRetroDocente = () => {
                                             colSpan={7}
                                             className="text-center py-4"
                                         >
-                                            No hay entregas todavía
+                                            No hay entregas para esta actividad
                                         </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
+
+                        <div className="mt-4 p-3 bg-blue-900 rounded">
+                            <p className="text-white text-sm">
+                                💡 <strong>Nota:</strong> Cada estudiante puede
+                                tener su propia calificación y retroalimentación
+                                individual. Los cambios se guardan de forma
+                                independiente para cada entrega.
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
