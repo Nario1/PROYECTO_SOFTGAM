@@ -372,7 +372,7 @@
         Route::get('/', [RecursoController::class, 'index']);
         Route::post('/', [RecursoController::class, 'store']);
         Route::delete('/{id}', [RecursoController::class, 'destroy']);
-        Route::post('/recursos/{id}/visibilidad', [RecursoController::class, 'cambiarVisibilidad']);
+        Route::post('/{id}/visibilidad', [RecursoController::class, 'cambiarVisibilidad']);
 
 
         // 🔹 Recursos (Estudiante)

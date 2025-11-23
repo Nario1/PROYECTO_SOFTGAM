@@ -637,8 +637,8 @@ export default {
 
     CambiarVisibilidadRecurso: (id, visible) =>
         axios.post(
-            `${base_api_url}/${id}/visibilidad`,
-            { visible }, // se envía el valor (true o false)
+            `${base_api_url}/recursos/${id}/visibilidad`, // ✅ Esto crea: /api/recursos/1/visibilidad
+            { visible },
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
