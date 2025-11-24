@@ -687,12 +687,26 @@ export default {
         });
     },
 
-    // Descargar archivo de entrega (archivo subido por el estudiante)
+    // ✅ Descargar entrega del estudiante (para estudiantes - descargar su propia entrega)
     DescargarEntrega: (actividadId) => {
         if (!actividadId) throw new Error("id de actividad es requerido");
         return axios.get(
-            `${base_api_url}/actividades/descargar-entrega/${actividadId}`,
+            `${base_api_url}/actividades/${actividadId}/descargar-entrega`,
             {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            }
+        );
+    },
+    // ✅ Descargar entrega de un estudiante específico (para docentes)
+    DescargarEntregaConEstudiante: (actividadId, estudianteId) => {
+        if (!actividadId) throw new Error("id de actividad es requerido");
+        if (!estudianteId) throw new Error("id de estudiante es requerido");
+        return axios.get(
+            `${base_api_url}/actividades/${actividadId}/descargar-entrega`,
+            {
+                params: { estudiante_id: estudianteId }, // ✅ Enviar como query parameter
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },

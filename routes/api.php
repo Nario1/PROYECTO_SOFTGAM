@@ -78,8 +78,7 @@
         
         // ⚠️ RUTAS ESPECÍFICAS PRIMERO (antes de /{id})
         Route::get('/descargar/{id}', [ActividadController::class, 'descargarArchivo']);
-        Route::get('/descargar-entrega/{id}', [ActividadController::class, 'descargarEntrega']);
-        Route::get('/estudiante/{id}', [ActividadController::class, 'getActividadesParaEstudiante']);
+        Route::get('/{id}/descargar-entrega', [ActividadController::class, 'descargarEntrega']);        Route::get('/estudiante/{id}', [ActividadController::class, 'getActividadesParaEstudiante']);
         Route::get('/docente/{id}', [ActividadController::class, 'getActividadesParaDocente']);
         Route::get('/{actividadId}/entregas', [ActividadController::class, 'getEntregasActividad']);
 

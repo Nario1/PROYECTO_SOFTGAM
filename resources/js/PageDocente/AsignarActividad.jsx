@@ -93,7 +93,8 @@ const AsignarActividad = () => {
         actividadId,
         archivoPath,
         tipo,
-        esEntrega = false
+        esEntrega = false,
+        estudianteId = null // ✅ NUEVO PARÁMETRO
     ) => {
         if (!archivoPath) {
             setMensaje({ tipo: "error", texto: "No hay archivo disponible" });
@@ -101,10 +102,18 @@ const AsignarActividad = () => {
         }
 
         try {
-            // Llamar al endpoint del backend para obtener la URL optimizada
             let response;
             if (esEntrega) {
-                response = await Config.DescargarEntrega(actividadId);
+                // ✅ Si es entrega y viene estudianteId (docente), usar el método con estudiante
+                if (estudianteId) {
+                    response = await Config.DescargarEntregaConEstudiante(
+                        actividadId,
+                        estudianteId
+                    );
+                } else {
+                    // Si no viene estudianteId (estudiante descargando su propia entrega)
+                    response = await Config.DescargarEntrega(actividadId);
+                }
             } else {
                 response = await Config.DescargarMaterialActividad(actividadId);
             }
@@ -649,10 +658,11 @@ const AsignarActividad = () => {
                                                     <button
                                                         onClick={() =>
                                                             manejarArchivo(
-                                                                act.id,
-                                                                act.archivo_material,
+                                                                actividadSeleccionada.id,
+                                                                e.archivo_entrega,
                                                                 tipoArchivo,
-                                                                false
+                                                                true,
+                                                                e.estudiante_id // ✅ ENVIAR estudiante_id
                                                             )
                                                         }
                                                         className="text-blue-400 hover:text-blue-300"
@@ -709,7 +719,7 @@ const AsignarActividad = () => {
                     </table>
                 </div>
 
-                {/* Modal de entregas */}
+                {/* Modal de entregas - CORREGIDO */}
                 {verEntregas && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-16 z-50 overflow-auto">
                         <div className="admin-card w-full max-w-3xl p-6 flex flex-col gap-4 overflow-y-auto max-h-[80vh]">
@@ -772,7 +782,8 @@ const AsignarActividad = () => {
                                                                             actividadSeleccionada.id,
                                                                             e.archivo_entrega,
                                                                             tipoArchivo,
-                                                                            true
+                                                                            true,
+                                                                            e.estudiante_id // ✅ ENVIAR estudiante_id
                                                                         )
                                                                     }
                                                                     className="text-blue-400 hover:text-blue-300"

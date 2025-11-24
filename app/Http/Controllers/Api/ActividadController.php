@@ -1015,16 +1015,31 @@ class ActividadController extends Controller
     }
 
     /**
-     * Descargar archivo de entrega - LÓGICA MEJORADA IGUAL QUE RecursoController
+     * Descargar archivo de entrega - CORREGIDO PARA DOCENTES Y ESTUDIANTES
      */
-    public function descargarEntrega($id, Request $request)
+    public function descargarEntrega($actividadId, Request $request)
     {
         $user = $request->user();
 
-        // Buscar la asignación por actividad_id y estudiante_id
+        // ✅ OBTENER EL estudiante_id del query parameter (para docentes)
+        $estudianteId = $request->query('estudiante_id');
+
+        // Si no viene estudiante_id en query, usar el del usuario autenticado (estudiante)
+        if (!$estudianteId) {
+            if ($user->rol === 'estudiante') {
+                $estudianteId = $user->id;
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Debe especificar el ID del estudiante'
+                ], 400);
+            }
+        }
+
+        // Buscar la asignación
         $asignacion = DB::table('asignaciones')
-            ->where('actividad_id', $id)
-            ->where('estudiante_id', $user->id)
+            ->where('actividad_id', $actividadId)
+            ->where('estudiante_id', $estudianteId)
             ->first();
 
         if (!$asignacion) {
@@ -1034,12 +1049,15 @@ class ActividadController extends Controller
             ], 404);
         }
 
-        // Verificar permisos - permitir docente y estudiante dueño del archivo
+        // ✅ VERIFICAR PERMISOS
         $puedeDescargar = false;
         
+        // Estudiante puede descargar su propia entrega
         if ($user->rol === 'estudiante' && $user->id == $asignacion->estudiante_id) {
             $puedeDescargar = true;
-        } elseif ($user->rol === 'docente' || $user->rol === 'admin') {
+        } 
+        // Docente/Admin pueden descargar cualquier entrega
+        elseif (in_array($user->rol, ['docente', 'admin'])) {
             $actividad = DB::table('actividades')->where('id', $asignacion->actividad_id)->first();
             if ($actividad && ($user->rol === 'admin' || $actividad->docente_id == $user->id)) {
                 $puedeDescargar = true;
@@ -1060,18 +1078,23 @@ class ActividadController extends Controller
             ], 404);
         }
 
-        // ✅ MISMA LÓGICA EXACTA QUE RecursoController
         $downloadUrl = $asignacion->archivo_entrega;
         $tipoArchivo = $this->determinarTipoArchivoEntrega($asignacion);
         
-        // Para documentos, forzar descarga
+        // ✅ CORREGIR URL: image/upload -> raw/upload para documentos
         if ($tipoArchivo === 'documento') {
+            // Si está mal clasificado como image, corregir a raw
             if (strpos($downloadUrl, 'image/upload') !== false) {
-                $downloadUrl = str_replace('image/upload', 'image/upload/fl_attachment', $downloadUrl);
-            } elseif (strpos($downloadUrl, 'raw/upload') !== false) {
+                $downloadUrl = str_replace('image/upload', 'raw/upload', $downloadUrl);
+            }
+            
+            // Agregar fl_attachment para forzar descarga
+            if (strpos($downloadUrl, 'raw/upload') !== false && strpos($downloadUrl, 'fl_attachment') === false) {
                 $downloadUrl = str_replace('raw/upload', 'raw/upload/fl_attachment', $downloadUrl);
             }
         }
+
+        Log::info("📥 Descargando entrega - Tipo: $tipoArchivo, URL: $downloadUrl");
 
         return response()->json([
             'success' => true,
@@ -1081,7 +1104,6 @@ class ActividadController extends Controller
             'action' => $this->determinarAccion($tipoArchivo)
         ]);
     }
-
     
 
     /**
