@@ -677,4 +677,26 @@ export default {
             }
         );
     },
+    // Descargar material de actividad (archivo subido por el docente)
+    DescargarMaterialActividad: (id) => {
+        if (!id) throw new Error("id de actividad es requerido");
+        return axios.get(`${base_api_url}/actividades/descargar/${id}`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+    },
+
+    // Descargar archivo de entrega (archivo subido por el estudiante)
+    DescargarEntrega: (actividadId) => {
+        if (!actividadId) throw new Error("id de actividad es requerido");
+        return axios.get(
+            `${base_api_url}/actividades/descargar-entrega/${actividadId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            }
+        );
+    },
 };

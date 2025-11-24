@@ -292,7 +292,7 @@ class ActividadController extends Controller
         }
 
         try {
-            // Manejar archivo material con Cloudinary - MISMA LÓGICA QUE RecursoController
+            // Manejar archivo material con Cloudinary
             $archivoUrl = null;
             $archivoPublicId = null;
             $nombreArchivoOriginal = null;
@@ -300,27 +300,43 @@ class ActividadController extends Controller
             
             if ($request->hasFile('archivo_material')) {
                 $file = $request->file('archivo_material');
-                
-                Log::info('Subiendo archivo material a Cloudinary: ' . $file->getClientOriginalName());
+                $nombreArchivoOriginal = $file->getClientOriginalName();
+                $extensionOriginal = strtolower($file->getClientOriginalExtension());
 
-                // 🔥 USAR MISMA CONFIGURACIÓN QUE RecursoController
+                Log::info('Subiendo archivo material a Cloudinary: ' . $nombreArchivoOriginal);
+
+                // ✅ DETERMINAR RESOURCE_TYPE CORRECTO
+                $resourceType = 'raw'; // Por defecto para documentos
+                
+                // Imágenes
+                if (in_array($extensionOriginal, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'])) {
+                    $resourceType = 'image';
+                } 
+                // Videos
+                elseif (in_array($extensionOriginal, ['mp4', 'mov', 'avi', 'mkv', 'wmv', 'webm', 'flv', 'mpeg'])) {
+                    $resourceType = 'video';
+                }
+                // Audio
+                elseif (in_array($extensionOriginal, ['mp3', 'wav', 'ogg', 'aac', 'm4a'])) {
+                    $resourceType = 'video'; // Cloudinary maneja audio como video
+                }
+                // Documentos (PDF, DOC, XLS, etc.) quedan como 'raw'
+
+                Log::info("Resource type detectado: $resourceType para extensión: $extensionOriginal");
+
+                // SUBIR A CLOUDINARY CON EL TIPO CORRECTO
                 $uploadResult = $this->cloudinary->uploadApi()->upload(
                     $file->getRealPath(),
                     [
                         'folder' => 'softgam/actividades/materiales',
-                        'resource_type' => 'auto'
+                        'resource_type' => $resourceType // ✅ USA EL TIPO CORRECTO
                     ]
                 );
 
                 $archivoUrl = $uploadResult['secure_url'];
                 $archivoPublicId = $uploadResult['public_id'];
-                
-                // Guardar nombre original y extensión
-                $nombreArchivoOriginal = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extensionOriginal = $file->getClientOriginalExtension();
 
-                Log::info('Archivo material subido: ' . $archivoUrl);
-                Log::info('URL tendrá estructura: https://res.cloudinary.com/dh1bttxzc/raw/upload/...');
+                Log::info('Archivo material subido correctamente: ' . $archivoUrl);
             }
 
             // Crear actividad
@@ -371,6 +387,7 @@ class ActividadController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error al crear actividad: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al crear actividad',
@@ -380,7 +397,7 @@ class ActividadController extends Controller
     }
 
     /**
-     * Descargar material de actividad - MISMA LÓGICA EXACTA QUE RecursoController
+     * Descargar material de actividad - LÓGICA MEJORADA IGUAL QUE RecursoController
      */
     public function descargarArchivo($id)
     {
@@ -393,49 +410,167 @@ class ActividadController extends Controller
             ], 404);
         }
 
-        // MISMA LÓGICA EXACTA QUE RecursoController - Retornar URL directa de Cloudinary
-        return response()->json([
-            'success' => true,
-            'download_url' => $actividad->archivo_material,
-            'file_name' => $this->generarNombreDescarga($actividad)
-        ]);
-    }
-
-    private function generarNombreDescarga($actividad)
-    {
-        // MISMA LÓGICA EXACTA QUE RecursoController
-        $extension = pathinfo($actividad->archivo_material, PATHINFO_EXTENSION);
-        $nombreBase = preg_replace('/[^a-zA-Z0-9-_]/', '_', $actividad->titulo);
+        // ✅ MISMA LÓGICA EXACTA QUE RecursoController
+        $downloadUrl = $actividad->archivo_material;
+        $tipoArchivo = $this->determinarTipoArchivo($actividad);
         
-        if (!$extension) {
-            // Usar extension_original si está disponible, sino determinar por tipo
-            if ($actividad->extension_original) {
-                $extension = $actividad->extension_original;
-            } else {
-                $extensiones = [
-                    'pdf' => 'pdf',
-                    'doc' => 'docx',
-                    'docx' => 'docx',
-                    'txt' => 'txt',
-                    'ppt' => 'pptx',
-                    'pptx' => 'pptx',
-                    'xlsx' => 'xlsx',
-                    'csv' => 'csv',
-                    'jpg' => 'jpg',
-                    'jpeg' => 'jpeg',
-                    'png' => 'png',
-                    'gif' => 'gif',
-                    'mp4' => 'mp4',
-                    'mov' => 'mov',
-                    'avi' => 'avi'
-                ];
-                $extension = $extensiones[$actividad->extension_original] ?? 'bin';
+        // Para documentos, forzar descarga en lugar de vista previa
+        if ($tipoArchivo === 'documento') {
+            // Cloudinary: agregar fl_attachment para forzar descarga
+            if (strpos($downloadUrl, 'image/upload') !== false) {
+                $downloadUrl = str_replace('image/upload', 'image/upload/fl_attachment', $downloadUrl);
+            } elseif (strpos($downloadUrl, 'raw/upload') !== false) {
+                $downloadUrl = str_replace('raw/upload', 'raw/upload/fl_attachment', $downloadUrl);
             }
         }
 
+        return response()->json([
+            'success' => true,
+            'download_url' => $downloadUrl,
+            'file_name' => $this->generarNombreDescarga($actividad),
+            'file_type' => $tipoArchivo,
+            'action' => $this->determinarAccion($tipoArchivo)
+        ]);
+    }
+
+    private function determinarTipoArchivo($actividad)
+    {
+        $extension = $this->determinarExtension($actividad);
+        
+        $tiposArchivo = [
+            'documento' => ['pdf', 'doc', 'docx', 'txt', 'ppt', 'pptx', 'xlsx', 'csv', 'odt', 'rtf'],
+            'imagen' => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'],
+            'video' => ['mp4', 'mov', 'avi', 'mkv', 'wmv', 'flv', 'webm'],
+            'otros' => ['zip', 'rar', '7z', 'tar', 'gz']
+        ];
+
+        foreach ($tiposArchivo as $tipo => $extensiones) {
+            if (in_array($extension, $extensiones)) {
+                return $tipo;
+            }
+        }
+
+        return 'otros';
+    }
+
+    /**
+     * Determinar tipo de archivo de entrega - IGUAL QUE RecursoController
+     */
+    private function determinarTipoArchivoEntrega($asignacion)
+    {
+        $extension = $this->determinarExtensionEntrega($asignacion);
+        
+        $tiposArchivo = [
+            'documento' => ['pdf', 'doc', 'docx', 'txt', 'ppt', 'pptx', 'xlsx', 'csv', 'odt', 'rtf'],
+            'imagen' => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'],
+            'video' => ['mp4', 'mov', 'avi', 'mkv', 'wmv', 'flv', 'webm'],
+            'otros' => ['zip', 'rar', '7z', 'tar', 'gz']
+        ];
+
+        foreach ($tiposArchivo as $tipo => $extensiones) {
+            if (in_array($extension, $extensiones)) {
+                return $tipo;
+            }
+        }
+
+        return 'otros';
+    }
+
+    /**
+     * Determinar acción según tipo de archivo - IGUAL QUE RecursoController
+     */
+    private function determinarAccion($tipoArchivo)
+    {
+        $acciones = [
+            'documento' => 'descargar',
+            'imagen' => 'ver',
+            'video' => 'ver',
+            'otros' => 'descargar'
+        ];
+
+        return $acciones[$tipoArchivo] ?? 'descargar';
+    }
+
+    /**
+     * Generar nombre de archivo para descarga - IGUAL QUE RecursoController
+     */
+    private function generarNombreDescarga($actividad)
+    {
+        // ✅ PRIMERO usar el nombre original si está disponible
+        if ($actividad->nombre_archivo_original) {
+            return $actividad->nombre_archivo_original;
+        }
+
+        // Si no, generar nombre basado en título
+        $nombreBase = preg_replace('/[^a-zA-Z0-9-_]/', '_', $actividad->titulo);
+        $extension = $this->determinarExtension($actividad);
+        
+        return $nombreBase . '.' . $extension;
+    }
+    /**
+     * Generar nombre de entrega - IGUAL QUE RecursoController
+     */
+    private function generarNombreEntrega($asignacion)
+    {
+        // ✅ PRIMERO usar el nombre original si está disponible
+        if ($asignacion->nombre_archivo_original_entrega) {
+            return $asignacion->nombre_archivo_original_entrega;
+        }
+
+        // Obtener título de la actividad para el nombre base
+        $actividad = DB::table('actividades')->where('id', $asignacion->actividad_id)->first();
+        $nombreBase = preg_replace('/[^a-zA-Z0-9-_]/', '_', $actividad->titulo . '_entrega');
+        
+        $extension = $this->determinarExtensionEntrega($asignacion);
+        
         return $nombreBase . '.' . $extension;
     }
 
+
+    /**
+     * Determinar extensión del archivo - IGUAL QUE RecursoController
+     */
+    private function determinarExtension($actividad)
+    {
+        // ✅ PRIMERO usar extensión original si está guardada
+        if ($actividad->extension_original) {
+            return $actividad->extension_original;
+        }
+
+        // Intentar obtener de la URL
+        $urlExtension = pathinfo($actividad->archivo_material, PATHINFO_EXTENSION);
+        if ($urlExtension && $urlExtension !== 'cloudinary') {
+            return $urlExtension;
+        }
+
+        // Mapeo por defecto
+        $extensiones = [
+            'documento' => 'pdf',
+            'imagen' => 'jpg',
+            'video' => 'mp4',
+            'otros' => 'zip'
+        ];
+
+        return $extensiones['documento'] ?? 'bin';
+    }
+    /**
+     * Determinar extensión de entrega - IGUAL QUE RecursoController
+     */
+    private function determinarExtensionEntrega($asignacion)
+    {
+        // ✅ PRIMERO usar extensión original si está guardada
+        if ($asignacion->extension_original_entrega) {
+            return $asignacion->extension_original_entrega;
+        }
+
+        // Intentar obtener de la URL
+        $urlExtension = pathinfo($asignacion->archivo_entrega, PATHINFO_EXTENSION);
+        if ($urlExtension && $urlExtension !== 'cloudinary') {
+            return $urlExtension;
+        }
+
+        return 'bin';
+    }
     /**
      * Actualizar actividad existente
      */
@@ -511,8 +646,8 @@ class ActividadController extends Controller
                 $datosActualizar['archivo_material'] = $uploadResult['secure_url'];
                 $datosActualizar['archivo_public_id'] = $uploadResult['public_id'];
                 
-                // Guardar nombre original y extensión
-                $datosActualizar['nombre_archivo_original'] = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                // Guardar nombre original y extensión - MISMA LÓGICA QUE RecursoController
+                $datosActualizar['nombre_archivo_original'] = $file->getClientOriginalName();
                 $datosActualizar['extension_original'] = $file->getClientOriginalExtension();
 
                 Log::info('Archivo material actualizado: ' . $datosActualizar['archivo_material']);
@@ -803,13 +938,30 @@ class ActividadController extends Controller
                 'fecha_entrega' => now(),
             ];
 
-            // Manejar archivo de entrega con Cloudinary - MISMA LÓGICA
+            // ✅ MANEJAR ARCHIVO DE ENTREGA CON RESOURCE_TYPE CORRECTO
             if ($request->hasFile('archivo_entrega')) {
                 $file = $request->file('archivo_entrega');
+                $nombreArchivoOriginal = $file->getClientOriginalName();
+                $extensionOriginal = strtolower($file->getClientOriginalExtension());
                 
-                Log::info('Subiendo archivo de entrega a Cloudinary: ' . $file->getClientOriginalName());
+                Log::info('Subiendo archivo de entrega a Cloudinary: ' . $nombreArchivoOriginal);
 
-                // Si ya existe un archivo anterior, eliminarlo de Cloudinary
+                // ✅ DETERMINAR RESOURCE_TYPE CORRECTO (igual que store)
+                $resourceType = 'raw';
+                
+                if (in_array($extensionOriginal, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'])) {
+                    $resourceType = 'image';
+                } 
+                elseif (in_array($extensionOriginal, ['mp4', 'mov', 'avi', 'mkv', 'wmv', 'webm', 'flv', 'mpeg'])) {
+                    $resourceType = 'video';
+                }
+                elseif (in_array($extensionOriginal, ['mp3', 'wav', 'ogg', 'aac', 'm4a'])) {
+                    $resourceType = 'video';
+                }
+
+                Log::info("Resource type detectado para entrega: $resourceType para extensión: $extensionOriginal");
+
+                // Si ya existe un archivo anterior, eliminarlo
                 if ($asignacion->archivo_entrega_public_id) {
                     try {
                         $this->cloudinary->uploadApi()->destroy($asignacion->archivo_entrega_public_id);
@@ -822,16 +974,16 @@ class ActividadController extends Controller
                     $file->getRealPath(),
                     [
                         'folder' => 'softgam/actividades/entregas',
-                        'resource_type' => 'auto'
+                        'resource_type' => $resourceType // ✅ USA EL TIPO CORRECTO
                     ]
                 );
 
                 $dataUpdate['archivo_entrega'] = $uploadResult['secure_url'];
                 $dataUpdate['archivo_entrega_public_id'] = $uploadResult['public_id'];
-                $dataUpdate['nombre_archivo_original_entrega'] = $file->getClientOriginalName();
-                $dataUpdate['extension_original_entrega'] = $file->getClientOriginalExtension();
+                $dataUpdate['nombre_archivo_original_entrega'] = $nombreArchivoOriginal;
+                $dataUpdate['extension_original_entrega'] = $extensionOriginal;
 
-                Log::info('Archivo de entrega subido: ' . $dataUpdate['archivo_entrega']);
+                Log::info('Archivo de entrega subido correctamente: ' . $dataUpdate['archivo_entrega']);
             }
 
             // Actualizar la asignación
@@ -863,7 +1015,7 @@ class ActividadController extends Controller
     }
 
     /**
-     * Descargar archivo de entrega - MISMA LÓGICA EXACTA QUE RecursoController
+     * Descargar archivo de entrega - LÓGICA MEJORADA IGUAL QUE RecursoController
      */
     public function descargarEntrega($id, Request $request)
     {
@@ -888,7 +1040,6 @@ class ActividadController extends Controller
         if ($user->rol === 'estudiante' && $user->id == $asignacion->estudiante_id) {
             $puedeDescargar = true;
         } elseif ($user->rol === 'docente' || $user->rol === 'admin') {
-            // Verificar si el docente es el creador de la actividad
             $actividad = DB::table('actividades')->where('id', $asignacion->actividad_id)->first();
             if ($actividad && ($user->rol === 'admin' || $actividad->docente_id == $user->id)) {
                 $puedeDescargar = true;
@@ -909,34 +1060,29 @@ class ActividadController extends Controller
             ], 404);
         }
 
-        // MISMA LÓGICA EXACTA QUE RecursoController - Retornar URL directa de Cloudinary
+        // ✅ MISMA LÓGICA EXACTA QUE RecursoController
+        $downloadUrl = $asignacion->archivo_entrega;
+        $tipoArchivo = $this->determinarTipoArchivoEntrega($asignacion);
+        
+        // Para documentos, forzar descarga
+        if ($tipoArchivo === 'documento') {
+            if (strpos($downloadUrl, 'image/upload') !== false) {
+                $downloadUrl = str_replace('image/upload', 'image/upload/fl_attachment', $downloadUrl);
+            } elseif (strpos($downloadUrl, 'raw/upload') !== false) {
+                $downloadUrl = str_replace('raw/upload', 'raw/upload/fl_attachment', $downloadUrl);
+            }
+        }
+
         return response()->json([
             'success' => true,
-            'download_url' => $asignacion->archivo_entrega,
-            'file_name' => $this->generarNombreEntrega($asignacion)
+            'download_url' => $downloadUrl,
+            'file_name' => $this->generarNombreEntrega($asignacion),
+            'file_type' => $tipoArchivo,
+            'action' => $this->determinarAccion($tipoArchivo)
         ]);
     }
 
-    private function generarNombreEntrega($asignacion)
-    {
-        // MISMA LÓGICA EXACTA QUE RecursoController
-        $extension = pathinfo($asignacion->archivo_entrega, PATHINFO_EXTENSION);
-        
-        // Priorizar nombre_archivo_original_entrega y extension_original_entrega si están disponibles
-        if ($asignacion->nombre_archivo_original_entrega && $asignacion->extension_original_entrega) {
-            return $asignacion->nombre_archivo_original_entrega . '.' . $asignacion->extension_original_entrega;
-        }
-
-        // Obtener título de la actividad para el nombre base
-        $actividad = DB::table('actividades')->where('id', $asignacion->actividad_id)->first();
-        $nombreBase = preg_replace('/[^a-zA-Z0-9-_]/', '_', $actividad->titulo . '_entrega');
-        
-        if (!$extension) {
-            $extension = $asignacion->extension_original_entrega ?? 'pdf';
-        }
-
-        return $nombreBase . '.' . $extension;
-    }
+    
 
     /**
      * Eliminar actividad y sus archivos de Cloudinary

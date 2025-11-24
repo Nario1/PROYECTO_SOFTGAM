@@ -52,65 +52,17 @@ const AsignarActividad = () => {
         fetchData();
     }, [docenteId]);
 
-    // 🔹 FUNCIÓN PARA DESCARGAR ARCHIVO - MISMA LÓGICA QUE RecursosDocente
-    const descargarArchivo = async (
-        archivoPath,
-        tipo,
-        actividadId,
-        esEntrega = false
-    ) => {
-        if (!archivoPath) {
-            setMensaje({
-                tipo: "error",
-                texto: "No hay archivo para descargar",
-            });
-            return;
-        }
-
-        try {
-            let response;
-            if (esEntrega) {
-                response = await Config.DescargarEntrega(actividadId);
-            } else {
-                response = await Config.DescargarMaterialActividad(actividadId);
-            }
-
-            if (response.data.success) {
-                // Crear un enlace temporal para descargar el archivo
-                const link = document.createElement("a");
-                link.href = response.data.download_url;
-                link.download = response.data.file_name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                setMensaje({
-                    tipo: "success",
-                    texto: `Archivo ${tipo} descargándose...`,
-                });
-            } else {
-                setMensaje({
-                    tipo: "error",
-                    texto: "Error al preparar la descarga",
-                });
-            }
-        } catch (err) {
-            console.error("❌ Error al descargar archivo:", err);
-            setMensaje({
-                tipo: "error",
-                texto: "Error al descargar el archivo",
-            });
-        }
-    };
-
-    // 🔹 FUNCIÓN PARA OBTENER EL TIPO DE ARCHIVO (MISMA LÓGICA QUE RecursosDocente)
-    const getTipoArchivo = (archivoPath) => {
+    // 🔹 FUNCIÓN PARA OBTENER EL TIPO DE ARCHIVO - IGUAL QUE RecursosDocente
+    const getTipoArchivo = (archivoPath, extensionOriginal = null) => {
         if (!archivoPath) return "otros";
 
-        const extension = archivoPath.split(".").pop()?.toLowerCase();
+        // Primero intentar con extensión original si existe
+        const extension = (
+            extensionOriginal || archivoPath.split(".").pop()
+        )?.toLowerCase();
 
-        if (
-            [
+        const tiposArchivo = {
+            documento: [
                 "pdf",
                 "doc",
                 "docx",
@@ -119,14 +71,104 @@ const AsignarActividad = () => {
                 "pptx",
                 "xlsx",
                 "csv",
-            ].includes(extension)
-        )
-            return "documento";
-        if (["mp4", "mov", "avi", "mkv"].includes(extension)) return "video";
-        if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(extension))
-            return "imagen";
+                "odt",
+                "rtf",
+            ],
+            imagen: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "ico"],
+            video: ["mp4", "mov", "avi", "mkv", "wmv", "flv", "webm"],
+            otros: ["zip", "rar", "7z", "tar", "gz"],
+        };
+
+        for (const [tipo, extensiones] of Object.entries(tiposArchivo)) {
+            if (extensiones.includes(extension)) {
+                return tipo;
+            }
+        }
 
         return "otros";
+    };
+
+    // 🔥 FUNCIÓN PRINCIPAL PARA MANEJAR ARCHIVOS - IGUAL QUE RecursosDocente
+    const manejarArchivo = async (
+        actividadId,
+        archivoPath,
+        tipo,
+        esEntrega = false
+    ) => {
+        if (!archivoPath) {
+            setMensaje({ tipo: "error", texto: "No hay archivo disponible" });
+            return;
+        }
+
+        try {
+            // Llamar al endpoint del backend para obtener la URL optimizada
+            let response;
+            if (esEntrega) {
+                response = await Config.DescargarEntrega(actividadId);
+            } else {
+                response = await Config.DescargarMaterialActividad(actividadId);
+            }
+
+            if (response.data?.success) {
+                const { download_url, file_name, action, file_type } =
+                    response.data;
+
+                if (action === "ver") {
+                    // Para imágenes y videos: abrir en nueva pestaña
+                    window.open(download_url, "_blank", "noopener,noreferrer");
+                    setMensaje({
+                        tipo: "success",
+                        texto: `${
+                            file_type === "imagen" ? "Imagen" : "Video"
+                        } abierto en nueva pestaña`,
+                    });
+                } else {
+                    // Para documentos y otros: forzar descarga
+                    const link = document.createElement("a");
+                    link.href = download_url;
+                    link.download = file_name;
+                    link.target = "_blank";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    setMensaje({
+                        tipo: "success",
+                        texto: `Descargando ${file_name}...`,
+                    });
+                }
+            } else {
+                setMensaje({
+                    tipo: "error",
+                    texto:
+                        response.data?.message || "Error al preparar archivo",
+                });
+            }
+        } catch (err) {
+            console.error("❌ Error al manejar archivo:", err);
+            setMensaje({
+                tipo: "error",
+                texto: "Error al procesar el archivo",
+            });
+        }
+    };
+
+    // 🔹 FUNCIÓN PARA DETERMINAR ÍCONO SEGÚN TIPO - IGUAL QUE RecursosDocente
+    const getIconoTipo = (tipo) => {
+        const iconos = {
+            documento: "📄",
+            imagen: "🖼️",
+            video: "🎥",
+            otros: "📦",
+        };
+        return iconos[tipo] || "📁";
+    };
+
+    // 🔹 FUNCIÓN PARA DETERMINAR TEXTO DEL BOTÓN - IGUAL QUE RecursosDocente
+    const getTextoBoton = (tipo) => {
+        return tipo === "imagen" || tipo === "video"
+            ? "👁️ Ver"
+            : "📥 Descargar";
     };
 
     const handleChange = (e) => {
@@ -141,7 +183,7 @@ const AsignarActividad = () => {
             archivo_material: file,
         }));
 
-        // Preview para imágenes - MISMA LÓGICA QUE RecursosDocente
+        // Preview para imágenes
         if (file) {
             const reader = new FileReader();
             reader.onload = () => setPreview(reader.result);
@@ -451,7 +493,6 @@ const AsignarActividad = () => {
                                 className="admin-input"
                             />
 
-                            {/* Preview para imágenes - MISMA LÓGICA QUE RecursosDocente */}
                             {preview &&
                                 getTipoArchivo(
                                     formData.archivo_existente ||
@@ -468,30 +509,43 @@ const AsignarActividad = () => {
 
                             {formData.archivo_existente &&
                                 !formData.archivo_material && (
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 p-2 bg-gray-700 rounded">
+                                        <span className="text-sm">
+                                            {getIconoTipo(
+                                                getTipoArchivo(
+                                                    formData.archivo_existente,
+                                                    actividadSeleccionada?.extension_original
+                                                )
+                                            )}
+                                        </span>
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                descargarArchivo(
+                                                manejarArchivo(
+                                                    actividadSeleccionada.id,
                                                     formData.archivo_existente,
                                                     getTipoArchivo(
-                                                        formData.archivo_existente
+                                                        formData.archivo_existente,
+                                                        actividadSeleccionada?.extension_original
                                                     ),
-                                                    actividadSeleccionada.id,
                                                     false
                                                 )
                                             }
-                                            className="text-blue-400 hover:text-blue-300 text-left"
+                                            className="text-blue-400 hover:text-blue-300"
                                         >
-                                            📥 Descargar archivo actual
+                                            {getTextoBoton(
+                                                getTipoArchivo(
+                                                    formData.archivo_existente,
+                                                    actividadSeleccionada?.extension_original
+                                                )
+                                            )}{" "}
+                                            archivo
                                         </button>
                                         <span className="text-xs text-gray-400">
-                                            {actividadSeleccionada?.nombre_archivo_original &&
-                                            actividadSeleccionada?.extension_original
-                                                ? `${actividadSeleccionada.nombre_archivo_original}.${actividadSeleccionada.extension_original}`
-                                                : formData.archivo_existente
-                                                      .split("/")
-                                                      .pop()}
+                                            {actividadSeleccionada?.nombre_archivo_original ||
+                                                formData.archivo_existente
+                                                    .split("/")
+                                                    .pop()}
                                         </span>
                                     </div>
                                 )}
@@ -546,9 +600,6 @@ const AsignarActividad = () => {
                                     Estudiantes
                                 </th>
                                 <th className="border border-gray-600 p-2">
-                                    Tipo
-                                </th>
-                                <th className="border border-gray-600 p-2">
                                     Archivo
                                 </th>
                                 <th className="border border-gray-600 p-2">
@@ -559,16 +610,9 @@ const AsignarActividad = () => {
                         <tbody>
                             {actividades.map((act) => {
                                 const tipoArchivo = getTipoArchivo(
-                                    act.archivo_material
-                                );
-
-                                const nombreArchivo =
-                                    act.nombre_archivo_original &&
+                                    act.archivo_material,
                                     act.extension_original
-                                        ? `${act.nombre_archivo_original}.${act.extension_original}`
-                                        : act.archivo_material
-                                        ? "Archivo sin nombre"
-                                        : "Sin archivo";
+                                );
 
                                 return (
                                     <tr
@@ -595,26 +639,33 @@ const AsignarActividad = () => {
                                             {act.estudiantes_count || 0}
                                         </td>
                                         <td className="border border-gray-600 p-2">
-                                            {tipoArchivo}
-                                        </td>
-                                        <td className="border border-gray-600 p-2">
                                             {act.archivo_material ? (
-                                                <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span>
+                                                        {getIconoTipo(
+                                                            tipoArchivo
+                                                        )}
+                                                    </span>
                                                     <button
                                                         onClick={() =>
-                                                            descargarArchivo(
+                                                            manejarArchivo(
+                                                                act.id,
                                                                 act.archivo_material,
                                                                 tipoArchivo,
-                                                                act.id,
                                                                 false
                                                             )
                                                         }
-                                                        className="text-blue-400 hover:text-blue-300 text-left"
+                                                        className="text-blue-400 hover:text-blue-300"
                                                     >
-                                                        📥 Descargar archivo
+                                                        {getTextoBoton(
+                                                            tipoArchivo
+                                                        )}
                                                     </button>
                                                     <span className="text-xs text-gray-400">
-                                                        {nombreArchivo}
+                                                        {act.nombre_archivo_original ||
+                                                            act.archivo_material
+                                                                .split("/")
+                                                                .pop()}
                                                     </span>
                                                 </div>
                                             ) : (
@@ -675,9 +726,6 @@ const AsignarActividad = () => {
                                             Texto de entrega
                                         </th>
                                         <th className="border border-gray-600 p-2">
-                                            Tipo
-                                        </th>
-                                        <th className="border border-gray-600 p-2">
                                             Archivo
                                         </th>
                                         <th className="border border-gray-600 p-2">
@@ -689,7 +737,7 @@ const AsignarActividad = () => {
                                     {entregas.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={5}
+                                                colSpan={4}
                                                 className="border border-gray-600 p-2 text-center"
                                             >
                                                 No hay entregas todavía
@@ -698,16 +746,9 @@ const AsignarActividad = () => {
                                     ) : (
                                         entregas.map((e, index) => {
                                             const tipoArchivo = getTipoArchivo(
-                                                e.archivo_entrega
-                                            );
-
-                                            const nombreArchivo =
-                                                e.nombre_archivo_original_entrega &&
+                                                e.archivo_entrega,
                                                 e.extension_original_entrega
-                                                    ? `${e.nombre_archivo_original_entrega}.${e.extension_original_entrega}`
-                                                    : e.archivo_entrega
-                                                    ? "Archivo sin nombre"
-                                                    : "Sin archivo";
+                                            );
 
                                             return (
                                                 <tr key={index}>
@@ -718,29 +759,35 @@ const AsignarActividad = () => {
                                                         {e.texto_entrega || "-"}
                                                     </td>
                                                     <td className="border border-gray-600 p-2">
-                                                        {tipoArchivo}
-                                                    </td>
-                                                    <td className="border border-gray-600 p-2">
                                                         {e.archivo_entrega ? (
-                                                            <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span>
+                                                                    {getIconoTipo(
+                                                                        tipoArchivo
+                                                                    )}
+                                                                </span>
                                                                 <button
                                                                     onClick={() =>
-                                                                        descargarArchivo(
+                                                                        manejarArchivo(
+                                                                            actividadSeleccionada.id,
                                                                             e.archivo_entrega,
                                                                             tipoArchivo,
-                                                                            actividadSeleccionada.id,
                                                                             true
                                                                         )
                                                                     }
-                                                                    className="text-blue-400 hover:text-blue-300 text-left"
+                                                                    className="text-blue-400 hover:text-blue-300"
                                                                 >
-                                                                    📥 Descargar
-                                                                    entrega
+                                                                    {getTextoBoton(
+                                                                        tipoArchivo
+                                                                    )}
                                                                 </button>
                                                                 <span className="text-xs text-gray-400">
-                                                                    {
-                                                                        nombreArchivo
-                                                                    }
+                                                                    {e.nombre_archivo_original_entrega ||
+                                                                        e.archivo_entrega
+                                                                            .split(
+                                                                                "/"
+                                                                            )
+                                                                            .pop()}
                                                                 </span>
                                                             </div>
                                                         ) : (

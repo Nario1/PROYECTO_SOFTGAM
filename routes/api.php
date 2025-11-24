@@ -69,61 +69,40 @@
         Route::get('/progreso/{user_id}/{juego_id}', [JugadaController::class, 'getProgreso']);
     });
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | RUTAS DE ACTIVIDADES - Diferenciadas por ROL
     |--------------------------------------------------------------------------
     */
     Route::middleware('auth:sanctum')->prefix('actividades')->group(function () {
         
-    // Listar actividades según rol
-        Route::get('/', [ActividadController::class, 'index']);
-
-        // Ver actividad específica
-        Route::get('/{id}', [ActividadController::class, 'show']);
-
-        // Crear nueva actividad - Solo docente/admin
-        Route::post('/', [ActividadController::class, 'store']);
-
-        // Actualizar actividad - Solo docente creador/admin
-        Route::put('/{id}', [ActividadController::class, 'update']);
-
-        // Eliminar actividad - Solo docente creador/admin
-        Route::delete('/{id}', [ActividadController::class, 'destroy']);
-
-        // Completar actividad - Solo estudiantes
-        Route::post('/completar', [ActividadController::class, 'complete']);
-
-        // Asignar actividad a estudiante - Solo docente/admin
-        Route::post('/asignar', [ActividadController::class, 'assignToStudent']);
-        // Obtener actividades de un estudiante específico - admin, docente o el mismo estudiante
+        // ⚠️ RUTAS ESPECÍFICAS PRIMERO (antes de /{id})
+        Route::get('/descargar/{id}', [ActividadController::class, 'descargarArchivo']);
+        Route::get('/descargar-entrega/{id}', [ActividadController::class, 'descargarEntrega']);
         Route::get('/estudiante/{id}', [ActividadController::class, 'getActividadesParaEstudiante']);
         Route::get('/docente/{id}', [ActividadController::class, 'getActividadesParaDocente']);
         Route::get('/{actividadId}/entregas', [ActividadController::class, 'getEntregasActividad']);
 
+        // RUTAS GENERALES
+        Route::get('/', [ActividadController::class, 'index']);
+        Route::post('/', [ActividadController::class, 'store']);
+        Route::post('/completar', [ActividadController::class, 'complete']);
+        Route::post('/asignar', [ActividadController::class, 'assignToStudent']);
+        
+        // /{id} AL FINAL (después de todas las rutas específicas)
+        Route::get('/{id}', [ActividadController::class, 'show']);
+        Route::put('/{id}', [ActividadController::class, 'update']);
+        Route::delete('/{id}', [ActividadController::class, 'destroy']);
 
         /* --------------------------------------------------------------------
-       RUTAS PARA RETROALIMENTACIÓN
-       --------------------------------------------------------------------
-       Usamos el nuevo RetroalimentacionController
-        */
-
-            // Guardar retroalimentación (docente)
+        RUTAS PARA RETROALIMENTACIÓN
+        --------------------------------------------------------------------*/
         Route::post('/{actividadId}/retroalimentacion', [RetroalimentacionController::class, 'store']);
-        
-        // Actualizar retroalimentación
         Route::put('/{actividadId}/retroalimentacion/{estudianteId}', [RetroalimentacionController::class, 'update']);
-        
-        // Eliminar retroalimentación
         Route::delete('/{actividadId}/retroalimentacion/{estudianteId}', [RetroalimentacionController::class, 'destroy']);
-        
-        // Obtener retroalimentación
         Route::get('/{actividadId}/retroalimentacion/{estudianteId}', [RetroalimentacionController::class, 'getByEstudiante']);
-        // Obtener todas las retroalimentaciones de un estudiante
         Route::get('/estudiante/{estudianteId}/retroalimentaciones', [RetroalimentacionController::class, 'getEstudianteRetro']);
     });
-    Route::get('actividades/{id}/descargar', [ActividadController::class, 'descargarArchivo']);
-    Route::get('actividades/{id}/descargar-entrega', [ActividadController::class, 'descargarEntrega']);
 
 
 
