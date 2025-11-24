@@ -19,7 +19,7 @@ const Navbar = () => {
                     style={{ textDecoration: "none", color: "inherit" }}
                 >
                     <img
-                        src="/img/logo.jpg"
+                        src="softgam/img/logo.jpg"
                         alt="Logo"
                         width="36"
                         height="36"
@@ -29,7 +29,7 @@ const Navbar = () => {
                             borderRadius: "8px",
                         }}
                     />
-                    TRILENIUMG
+                    TRILENIUM
                 </Link>
             </div>
 
