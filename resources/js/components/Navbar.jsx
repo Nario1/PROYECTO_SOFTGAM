@@ -1,7 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import AuthUser from "../pageauth/AuthUser";
-import "../styles/Navbar.css"; // Asegúrate de importar tu CSS
+import "../styles/Navbar.css";
+import logo from "./logo.jpg"; // ← Agregar esta importación
 
 const Navbar = () => {
     const { getToken, logout } = AuthUser();
@@ -19,7 +20,7 @@ const Navbar = () => {
                     style={{ textDecoration: "none", color: "inherit" }}
                 >
                     <img
-                        src="/img/logo.jpg"
+                        src={logo} // ← Cambiar esta línea
                         alt="Logo"
                         width="36"
                         height="36"
