@@ -194,10 +194,10 @@ const RecursosDocente = () => {
 
     const cambiarVisibilidad = async (id, visible) => {
         try {
-            const res = await Config.CambiarVisibilidadRecurso(
-                id,
-                visible ? 1 : 0
-            );
+            const res = await Config.CambiarVisibilidadRecurso(id, {
+                visible: visible ? 1 : 0,
+            });
+
             if (res.data.success) {
                 setRecursos((prev) =>
                     prev.map((r) =>

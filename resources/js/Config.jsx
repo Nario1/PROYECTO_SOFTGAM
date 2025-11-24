@@ -635,16 +635,14 @@ export default {
         });
     },
 
-    CambiarVisibilidadRecurso: (id, visible) =>
-        axios.post(
-            `${base_api_url}/recursos/${id}/visibilidad`, // ✅ Esto crea: /api/recursos/1/visibilidad
-            { visible },
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-            }
-        ),
+    CambiarVisibilidadRecurso: (id, data) => {
+        return axios.post(`${base_api_url}/recursos/${id}/visibilidad`, data, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+    },
+
     // Obtener todos los recursos visibles para estudiantes (opcionalmente por temática)
     // Obtener todos los recursos visibles para estudiantes
     GetRecursosParaEstudiantes: () => {
