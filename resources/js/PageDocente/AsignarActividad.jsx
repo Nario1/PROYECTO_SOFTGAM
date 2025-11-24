@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
-import "../styles/docente.css"; // estilos generales
-import SidebarDocente from "./SidebarDocente"; // 🔹 Sidebar añadido
+import "../styles/docente.css";
+import SidebarDocente from "./SidebarDocente";
 
 const AsignarActividad = () => {
     const { getUserId } = AuthUser();
@@ -26,6 +26,7 @@ const AsignarActividad = () => {
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [verEntregas, setVerEntregas] = useState(false);
     const [entregas, setEntregas] = useState([]);
+    const [preview, setPreview] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -51,16 +52,103 @@ const AsignarActividad = () => {
         fetchData();
     }, [docenteId]);
 
+    // 🔹 FUNCIÓN PARA DESCARGAR ARCHIVO - MISMA LÓGICA QUE RecursosDocente
+    const descargarArchivo = async (
+        archivoPath,
+        tipo,
+        actividadId,
+        esEntrega = false
+    ) => {
+        if (!archivoPath) {
+            setMensaje({
+                tipo: "error",
+                texto: "No hay archivo para descargar",
+            });
+            return;
+        }
+
+        try {
+            let response;
+            if (esEntrega) {
+                response = await Config.DescargarEntrega(actividadId);
+            } else {
+                response = await Config.DescargarMaterialActividad(actividadId);
+            }
+
+            if (response.data.success) {
+                // Crear un enlace temporal para descargar el archivo
+                const link = document.createElement("a");
+                link.href = response.data.download_url;
+                link.download = response.data.file_name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                setMensaje({
+                    tipo: "success",
+                    texto: `Archivo ${tipo} descargándose...`,
+                });
+            } else {
+                setMensaje({
+                    tipo: "error",
+                    texto: "Error al preparar la descarga",
+                });
+            }
+        } catch (err) {
+            console.error("❌ Error al descargar archivo:", err);
+            setMensaje({
+                tipo: "error",
+                texto: "Error al descargar el archivo",
+            });
+        }
+    };
+
+    // 🔹 FUNCIÓN PARA OBTENER EL TIPO DE ARCHIVO (MISMA LÓGICA QUE RecursosDocente)
+    const getTipoArchivo = (archivoPath) => {
+        if (!archivoPath) return "otros";
+
+        const extension = archivoPath.split(".").pop()?.toLowerCase();
+
+        if (
+            [
+                "pdf",
+                "doc",
+                "docx",
+                "txt",
+                "ppt",
+                "pptx",
+                "xlsx",
+                "csv",
+            ].includes(extension)
+        )
+            return "documento";
+        if (["mp4", "mov", "avi", "mkv"].includes(extension)) return "video";
+        if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(extension))
+            return "imagen";
+
+        return "otros";
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleFileChange = (e) => {
+        const file = e.target.files[0];
         setFormData((prev) => ({
             ...prev,
-            archivo_material: e.target.files[0],
+            archivo_material: file,
         }));
+
+        // Preview para imágenes - MISMA LÓGICA QUE RecursosDocente
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => setPreview(reader.result);
+            reader.readAsDataURL(file);
+        } else {
+            setPreview(null);
+        }
     };
 
     const handleSelectEstudiante = (e) => {
@@ -171,6 +259,7 @@ const AsignarActividad = () => {
                 });
                 setActividadSeleccionada(null);
                 setMostrarFormulario(false);
+                setPreview(null);
 
                 const resActividades = await Config.GetActividadesDocente(
                     docenteId
@@ -201,6 +290,7 @@ const AsignarActividad = () => {
             archivo_existente: actividad.archivo_material || null,
             estudiantes_ids: actividad.estudiantes_ids?.map(String) || [],
         });
+        setPreview(actividad.archivo_material || null);
         setMostrarFormulario(true);
         setVerEntregas(false);
     };
@@ -244,23 +334,25 @@ const AsignarActividad = () => {
     };
 
     return (
-        <div className="admin-container">
-            <SidebarDocente /> {/* 🔹 Sidebar fijo añadido */}
+        <div className="admin-container d-flex" style={{ minHeight: "100vh" }}>
+            <SidebarDocente />
             <div
-                className="admin-content flex flex-col gap-6 overflow-y-auto"
-                style={{ maxHeight: "100vh" }}
+                className="admin-content overflow-y-auto flex flex-col gap-6 p-6"
+                style={{ maxHeight: "100vh", flexGrow: 1 }}
             >
                 <h2 className="text-2xl font-bold mb-4">
-                    Actividades del Docente
+                    📝 Actividades del Docente
                 </h2>
 
                 {mensaje && (
                     <p
-                        className={
+                        className={`font-semibold ${
                             mensaje.tipo === "error"
-                                ? "text-danger"
-                                : "text-success"
-                        }
+                                ? "text-red-500"
+                                : mensaje.tipo === "success"
+                                ? "text-green-500"
+                                : "text-blue-500"
+                        }`}
                     >
                         {mensaje.texto}
                     </p>
@@ -271,10 +363,13 @@ const AsignarActividad = () => {
                         setMostrarFormulario(!mostrarFormulario);
                         setActividadSeleccionada(null);
                         setVerEntregas(false);
+                        setPreview(null);
                     }}
                     className="admin-btn"
                 >
-                    {mostrarFormulario ? "Cancelar" : "Agregar Nueva Actividad"}
+                    {mostrarFormulario
+                        ? "❌ Cancelar"
+                        : "➕ Agregar Nueva Actividad"}
                 </button>
 
                 {/* Formulario */}
@@ -282,8 +377,8 @@ const AsignarActividad = () => {
                     <div className="admin-card">
                         <h3 className="text-lg font-semibold mb-4">
                             {actividadSeleccionada
-                                ? "Editar Actividad"
-                                : "Nueva Actividad"}
+                                ? "✏️ Editar Actividad"
+                                : "📝 Nueva Actividad"}
                         </h3>
                         <form
                             onSubmit={handleSubmit}
@@ -336,7 +431,9 @@ const AsignarActividad = () => {
                                     className="admin-btn"
                                     disabled={loadingTematica}
                                 >
-                                    {loadingTematica ? "Creando..." : "Crear"}
+                                    {loadingTematica
+                                        ? "⏳ Creando..."
+                                        : "📁 Crear"}
                                 </button>
                             </div>
 
@@ -347,24 +444,56 @@ const AsignarActividad = () => {
                                 onChange={handleChange}
                                 className="admin-input"
                             />
+
                             <input
                                 type="file"
                                 onChange={handleFileChange}
                                 className="admin-input"
                             />
+
+                            {/* Preview para imágenes - MISMA LÓGICA QUE RecursosDocente */}
+                            {preview &&
+                                getTipoArchivo(
+                                    formData.archivo_existente ||
+                                        (formData.archivo_material
+                                            ? formData.archivo_material.name
+                                            : "")
+                                ) === "imagen" && (
+                                    <img
+                                        src={preview}
+                                        alt="preview"
+                                        className="max-w-xs rounded"
+                                    />
+                                )}
+
                             {formData.archivo_existente &&
                                 !formData.archivo_material && (
-                                    <p>
-                                        Archivo actual:{" "}
-                                        <a
-                                            href={`${window.location.origin}/storage/${formData.archivo_existente}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-500 underline"
+                                    <div className="flex flex-col gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                descargarArchivo(
+                                                    formData.archivo_existente,
+                                                    getTipoArchivo(
+                                                        formData.archivo_existente
+                                                    ),
+                                                    actividadSeleccionada.id,
+                                                    false
+                                                )
+                                            }
+                                            className="text-blue-400 hover:text-blue-300 text-left"
                                         >
-                                            Abrir / Descargar
-                                        </a>
-                                    </p>
+                                            📥 Descargar archivo actual
+                                        </button>
+                                        <span className="text-xs text-gray-400">
+                                            {actividadSeleccionada?.nombre_archivo_original &&
+                                            actividadSeleccionada?.extension_original
+                                                ? `${actividadSeleccionada.nombre_archivo_original}.${actividadSeleccionada.extension_original}`
+                                                : formData.archivo_existente
+                                                      .split("/")
+                                                      .pop()}
+                                        </span>
+                                    </div>
                                 )}
 
                             <select
@@ -387,106 +516,144 @@ const AsignarActividad = () => {
                                 onClick={handleAsignarTodos}
                                 className="admin-btn w-full"
                             >
-                                Asignar a todos
+                                👥 Asignar a todos
                             </button>
 
                             <button type="submit" className="admin-btn w-full">
                                 {actividadSeleccionada
-                                    ? "Actualizar"
-                                    : "Crear y Asignar"}
+                                    ? "💾 Actualizar"
+                                    : "🚀 Crear y Asignar"}
                             </button>
                         </form>
                     </div>
                 )}
 
                 {/* Lista de actividades */}
-                <div className="admin-card overflow-x-auto overflow-y-auto max-h-[60vh]">
-                    <table className="min-w-full bg-black text-white">
-                        <thead className="bg-gray-800">
+                <div className="admin-card overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-300 text-white">
+                        <thead className="bg-gray-800 sticky top-0 z-10">
                             <tr>
-                                <th className="py-2 px-4 border border-gray-600">
+                                <th className="border border-gray-600 p-2">
                                     Título
                                 </th>
-                                <th className="py-2 px-4 border border-gray-600">
+                                <th className="border border-gray-600 p-2">
                                     Temática
                                 </th>
-                                <th className="py-2 px-4 border border-gray-600">
+                                <th className="border border-gray-600 p-2">
                                     Fecha límite
                                 </th>
-                                <th className="py-2 px-4 border border-gray-600">
-                                    Estudiantes asignados
+                                <th className="border border-gray-600 p-2">
+                                    Estudiantes
                                 </th>
-                                <th className="py-2 px-4 border border-gray-600">
-                                    Material
+                                <th className="border border-gray-600 p-2">
+                                    Tipo
                                 </th>
-                                <th className="py-2 px-4 border border-gray-600">
+                                <th className="border border-gray-600 p-2">
+                                    Archivo
+                                </th>
+                                <th className="border border-gray-600 p-2">
                                     Acciones
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
-                            {actividades.map((act) => (
-                                <tr
-                                    key={act.id}
-                                    className="hover:bg-gray-900 transition"
-                                >
-                                    <td className="py-2 px-4 border border-gray-600">
-                                        {act.titulo}
-                                    </td>
-                                    <td className="py-2 px-4 border border-gray-600">
-                                        {act.tematica_nombre}
-                                    </td>
-                                    <td
-                                        className={`py-2 px-4 border border-gray-600 ${
-                                            new Date(act.fecha_limite) <
-                                            new Date()
-                                                ? "text-danger"
-                                                : ""
-                                        }`}
+                            {actividades.map((act) => {
+                                const tipoArchivo = getTipoArchivo(
+                                    act.archivo_material
+                                );
+
+                                const nombreArchivo =
+                                    act.nombre_archivo_original &&
+                                    act.extension_original
+                                        ? `${act.nombre_archivo_original}.${act.extension_original}`
+                                        : act.archivo_material
+                                        ? "Archivo sin nombre"
+                                        : "Sin archivo";
+
+                                return (
+                                    <tr
+                                        key={act.id}
+                                        className="hover:bg-gray-700"
                                     >
-                                        {act.fecha_limite || "-"}
-                                    </td>
-                                    <td className="py-2 px-4 border border-gray-600">
-                                        {act.estudiantes_count || 0}
-                                    </td>
-                                    <td className="py-2 px-4 border border-gray-600">
-                                        {act.archivo_material ? (
-                                            <a
-                                                href={`${window.location.origin}/storage/${act.archivo_material}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-500 underline"
-                                            >
-                                                Abrir / Descargar
-                                            </a>
-                                        ) : (
-                                            "-"
-                                        )}
-                                    </td>
-                                    <td className="py-2 px-4 border border-gray-600 flex gap-1 flex-wrap">
-                                        <button
-                                            onClick={() => editarActividad(act)}
-                                            className="admin-btn text-sm"
+                                        <td className="border border-gray-600 p-2">
+                                            {act.titulo}
+                                        </td>
+                                        <td className="border border-gray-600 p-2">
+                                            {act.tematica_nombre}
+                                        </td>
+                                        <td
+                                            className={`border border-gray-600 p-2 ${
+                                                new Date(act.fecha_limite) <
+                                                new Date()
+                                                    ? "text-red-400"
+                                                    : ""
+                                            }`}
                                         >
-                                            Editar
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                eliminarActividad(act.id)
-                                            }
-                                            className="admin-btn admin-btn-danger text-sm"
-                                        >
-                                            Eliminar
-                                        </button>
-                                        <button
-                                            onClick={() => mostrarEntregas(act)}
-                                            className="admin-btn text-sm"
-                                        >
-                                            Ver entregas
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                                            {act.fecha_limite || "-"}
+                                        </td>
+                                        <td className="border border-gray-600 p-2 text-center">
+                                            {act.estudiantes_count || 0}
+                                        </td>
+                                        <td className="border border-gray-600 p-2">
+                                            {tipoArchivo}
+                                        </td>
+                                        <td className="border border-gray-600 p-2">
+                                            {act.archivo_material ? (
+                                                <div className="flex flex-col gap-1">
+                                                    <button
+                                                        onClick={() =>
+                                                            descargarArchivo(
+                                                                act.archivo_material,
+                                                                tipoArchivo,
+                                                                act.id,
+                                                                false
+                                                            )
+                                                        }
+                                                        className="text-blue-400 hover:text-blue-300 text-left"
+                                                    >
+                                                        📥 Descargar archivo
+                                                    </button>
+                                                    <span className="text-xs text-gray-400">
+                                                        {nombreArchivo}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </td>
+                                        <td className="border border-gray-600 p-2">
+                                            <div className="flex flex-col gap-1">
+                                                <button
+                                                    onClick={() =>
+                                                        editarActividad(act)
+                                                    }
+                                                    className="admin-btn text-sm px-2 py-1"
+                                                >
+                                                    ✏️ Editar
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        eliminarActividad(
+                                                            act.id
+                                                        )
+                                                    }
+                                                    className="admin-btn admin-btn-danger text-sm px-2 py-1"
+                                                >
+                                                    🗑️ Eliminar
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        mostrarEntregas(act)
+                                                    }
+                                                    className="admin-btn text-sm px-2 py-1"
+                                                >
+                                                    📋 Ver entregas
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -496,21 +663,24 @@ const AsignarActividad = () => {
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-16 z-50 overflow-auto">
                         <div className="admin-card w-full max-w-3xl p-6 flex flex-col gap-4 overflow-y-auto max-h-[80vh]">
                             <h3 className="text-lg font-semibold mb-4">
-                                Entregas de: {actividadSeleccionada.titulo}
+                                📋 Entregas de: {actividadSeleccionada.titulo}
                             </h3>
-                            <table className="min-w-full bg-black text-white">
+                            <table className="w-full border-collapse border border-gray-300 text-white">
                                 <thead className="bg-gray-800">
                                     <tr>
-                                        <th className="py-2 px-4 border border-gray-600">
+                                        <th className="border border-gray-600 p-2">
                                             Estudiante
                                         </th>
-                                        <th className="py-2 px-4 border border-gray-600">
+                                        <th className="border border-gray-600 p-2">
                                             Texto de entrega
                                         </th>
-                                        <th className="py-2 px-4 border border-gray-600">
+                                        <th className="border border-gray-600 p-2">
+                                            Tipo
+                                        </th>
+                                        <th className="border border-gray-600 p-2">
                                             Archivo
                                         </th>
-                                        <th className="py-2 px-4 border border-gray-600">
+                                        <th className="border border-gray-600 p-2">
                                             Fecha de entrega
                                         </th>
                                     </tr>
@@ -519,43 +689,79 @@ const AsignarActividad = () => {
                                     {entregas.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={4}
-                                                className="py-2 px-4 border border-gray-600 text-center"
+                                                colSpan={5}
+                                                className="border border-gray-600 p-2 text-center"
                                             >
                                                 No hay entregas todavía
                                             </td>
                                         </tr>
                                     ) : (
-                                        entregas.map((e) => (
-                                            <tr key={e.id}>
-                                                <td className="py-2 px-4 border border-gray-600">
-                                                    {e.estudiante_nombre}
-                                                </td>
-                                                <td className="py-2 px-4 border border-gray-600">
-                                                    {e.texto_entrega || "-"}
-                                                </td>
-                                                <td className="py-2 px-4 border border-gray-600">
-                                                    {e.archivo_entrega ? (
-                                                        <a
-                                                            href={`/storage/${e.archivo_entrega}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-blue-500 underline"
-                                                        >
-                                                            Descargar
-                                                        </a>
-                                                    ) : (
-                                                        "-"
-                                                    )}
-                                                </td>
-                                                <td className="py-2 px-4 border border-gray-600">
-                                                    {e.fecha_entrega || "-"}
-                                                </td>
-                                            </tr>
-                                        ))
+                                        entregas.map((e, index) => {
+                                            const tipoArchivo = getTipoArchivo(
+                                                e.archivo_entrega
+                                            );
+
+                                            const nombreArchivo =
+                                                e.nombre_archivo_original_entrega &&
+                                                e.extension_original_entrega
+                                                    ? `${e.nombre_archivo_original_entrega}.${e.extension_original_entrega}`
+                                                    : e.archivo_entrega
+                                                    ? "Archivo sin nombre"
+                                                    : "Sin archivo";
+
+                                            return (
+                                                <tr key={index}>
+                                                    <td className="border border-gray-600 p-2">
+                                                        {e.estudiante_nombre}
+                                                    </td>
+                                                    <td className="border border-gray-600 p-2">
+                                                        {e.texto_entrega || "-"}
+                                                    </td>
+                                                    <td className="border border-gray-600 p-2">
+                                                        {tipoArchivo}
+                                                    </td>
+                                                    <td className="border border-gray-600 p-2">
+                                                        {e.archivo_entrega ? (
+                                                            <div className="flex flex-col gap-1">
+                                                                <button
+                                                                    onClick={() =>
+                                                                        descargarArchivo(
+                                                                            e.archivo_entrega,
+                                                                            tipoArchivo,
+                                                                            actividadSeleccionada.id,
+                                                                            true
+                                                                        )
+                                                                    }
+                                                                    className="text-blue-400 hover:text-blue-300 text-left"
+                                                                >
+                                                                    📥 Descargar
+                                                                    entrega
+                                                                </button>
+                                                                <span className="text-xs text-gray-400">
+                                                                    {
+                                                                        nombreArchivo
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            "-"
+                                                        )}
+                                                    </td>
+                                                    <td className="border border-gray-600 p-2">
+                                                        {e.fecha_entrega || "-"}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>
+                            <button
+                                onClick={() => setVerEntregas(false)}
+                                className="admin-btn mt-4"
+                            >
+                                ❌ Cerrar
+                            </button>
                         </div>
                     </div>
                 )}

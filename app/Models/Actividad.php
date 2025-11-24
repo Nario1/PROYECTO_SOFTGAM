@@ -16,6 +16,9 @@ class Actividad extends Model
         'docente_id',
         'fecha_limite',
         'archivo_material', // PDF o imagen que suba el docente
+        'archivo_public_id', // ✅ NUEVO: ID público de Cloudinary
+        'nombre_archivo_original', // ✅ NUEVO: Nombre original del archivo
+        'extension_original', // ✅ NUEVO: Extensión original del archivo
     ];
 
     // RELACIONES
@@ -32,5 +35,20 @@ class Actividad extends Model
     public function asignaciones()
     {
         return $this->hasMany(Asignacion::class, 'actividad_id');
+    }
+
+    // ✅ NUEVO: Método para obtener nombre de archivo completo
+    public function getNombreArchivoCompletoAttribute()
+    {
+        if ($this->nombre_archivo_original && $this->extension_original) {
+            return $this->nombre_archivo_original . '.' . $this->extension_original;
+        }
+        return basename($this->archivo_material) ?? 'archivo';
+    }
+
+    // ✅ NUEVO: Método para verificar si tiene archivo
+    public function getTieneArchivoAttribute()
+    {
+        return !empty($this->archivo_material);
     }
 }

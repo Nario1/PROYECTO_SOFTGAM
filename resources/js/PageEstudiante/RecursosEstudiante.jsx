@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
-import SidebarEstudiante from "./SidebarEstudiante"; // sidebar
-import "../styles/docente.css"; // estilos generales
+import SidebarEstudiante from "./SidebarEstudiante";
+import "../styles/docente.css";
 
 const RecursosEstudiante = () => {
     const { getUserId } = AuthUser();
@@ -35,9 +35,91 @@ const RecursosEstudiante = () => {
         fetchRecursos();
     }, [studentId]);
 
+    // 🔹 FUNCIÓN PARA ABRIR ARCHIVO EN NUEVA PESTAÑA
+    const abrirArchivo = (archivoPath, tipo, nombreArchivo = "") => {
+        if (!archivoPath) {
+            setMensaje({ tipo: "error", texto: "No hay archivo para abrir" });
+            return;
+        }
+
+        // Construir la URL completa del archivo
+        const urlArchivo = archivoPath.startsWith("http")
+            ? archivoPath
+            : `${window.location.origin}/storage/${archivoPath}`;
+
+        // Abrir en nueva pestaña
+        window.open(urlArchivo, "_blank", "noopener,noreferrer");
+
+        setMensaje({
+            tipo: "success",
+            texto: `Archivo ${tipo} abierto en nueva pestaña`,
+        });
+    };
+
+    // 🔹 FUNCIÓN PARA DESCARGAR ARCHIVO
+    const descargarArchivo = (archivoPath, nombreArchivo = "") => {
+        if (!archivoPath) {
+            setMensaje({
+                tipo: "error",
+                texto: "No hay archivo para descargar",
+            });
+            return;
+        }
+
+        const urlArchivo = archivoPath.startsWith("http")
+            ? archivoPath
+            : `${window.location.origin}/storage/${archivoPath}`;
+
+        // Crear un enlace temporal para descarga
+        const link = document.createElement("a");
+        link.href = urlArchivo;
+        link.target = "_blank";
+        link.download =
+            nombreArchivo || archivoPath.split("/").pop() || "archivo";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setMensaje({
+            tipo: "success",
+            texto: "Descargando archivo...",
+        });
+    };
+
+    // 🔹 FUNCIÓN PARA OBTENER EL ICONO SEGÚN EL TIPO DE ARCHIVO
+    const getIconoPorTipo = (tipo) => {
+        switch (tipo) {
+            case "documento":
+                return "📄";
+            case "video":
+                return "🎬";
+            case "imagen":
+                return "🖼️";
+            case "enlace":
+                return "🔗";
+            default:
+                return "📁";
+        }
+    };
+
+    // 🔹 FUNCIÓN PARA OBTENER EL TEXTO DEL BOTÓN SEGÚN EL TIPO
+    const getTextoBoton = (tipo) => {
+        switch (tipo) {
+            case "documento":
+                return "Abrir documento";
+            case "video":
+                return "Ver video";
+            case "imagen":
+                return "Ver imagen";
+            case "enlace":
+                return "Abrir enlace";
+            default:
+                return "Abrir archivo";
+        }
+    };
+
     return (
         <div className="admin-container d-flex" style={{ minHeight: "100vh" }}>
-            {/* Sidebar */}
             <SidebarEstudiante />
 
             <div
@@ -52,8 +134,10 @@ const RecursosEstudiante = () => {
                     <p
                         className={`font-bold mb-4 ${
                             mensaje.tipo === "error"
-                                ? "text-danger"
-                                : "text-success"
+                                ? "text-red-500"
+                                : mensaje.tipo === "success"
+                                ? "text-green-500"
+                                : "text-blue-500"
                         }`}
                     >
                         {mensaje.texto}
@@ -85,6 +169,9 @@ const RecursosEstudiante = () => {
                                         Temática
                                     </th>
                                     <th className="py-2 px-4 border border-gray-600">
+                                        Tipo
+                                    </th>
+                                    <th className="py-2 px-4 border border-gray-600">
                                         Fecha Publicación
                                     </th>
                                     <th className="py-2 px-4 border border-gray-600">
@@ -112,28 +199,78 @@ const RecursosEstudiante = () => {
                                         <td className="py-2 px-4 border border-gray-600">
                                             {r.tematica?.nombre || "-"}
                                         </td>
+                                        <td className="py-2 px-4 border border-gray-600 text-center">
+                                            <span title={r.tipo}>
+                                                {getIconoPorTipo(r.tipo)}
+                                            </span>
+                                        </td>
                                         <td className="py-2 px-4 border border-gray-600">
                                             {r.fecha_publicacion || "-"}
                                         </td>
                                         <td className="py-2 px-4 border border-gray-600">
                                             {r.tipo === "enlace" ? (
-                                                <a
-                                                    href={r.url_recurso}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-500 underline"
-                                                >
-                                                    Ver enlace
-                                                </a>
+                                                <div className="flex flex-col gap-1">
+                                                    <button
+                                                        onClick={() =>
+                                                            abrirArchivo(
+                                                                r.url_recurso,
+                                                                r.tipo
+                                                            )
+                                                        }
+                                                        className="text-blue-400 hover:text-blue-300 text-left flex items-center gap-1"
+                                                    >
+                                                        🔗{" "}
+                                                        {getTextoBoton(r.tipo)}
+                                                    </button>
+                                                    <span className="text-xs text-gray-400 break-all">
+                                                        {r.url_recurso}
+                                                    </span>
+                                                </div>
                                             ) : r.archivo_path ? (
-                                                <a
-                                                    href={`${window.location.origin}/storage/${r.archivo_path}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-500 underline"
-                                                >
-                                                    Ver archivo
-                                                </a>
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() =>
+                                                                abrirArchivo(
+                                                                    r.archivo_path,
+                                                                    r.tipo,
+                                                                    r.nombre_archivo_original
+                                                                )
+                                                            }
+                                                            className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
+                                                        >
+                                                            👁️{" "}
+                                                            {getTextoBoton(
+                                                                r.tipo
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                descargarArchivo(
+                                                                    r.archivo_path,
+                                                                    r.nombre_archivo_original ||
+                                                                        r.archivo_path
+                                                                            .split(
+                                                                                "/"
+                                                                            )
+                                                                            .pop()
+                                                                )
+                                                            }
+                                                            className="text-green-400 hover:text-green-300 text-sm flex items-center gap-1"
+                                                        >
+                                                            ⬇️ Descargar
+                                                        </button>
+                                                    </div>
+                                                    <span className="text-xs text-gray-400 break-all">
+                                                        {r.nombre_archivo_original ||
+                                                            r.archivo_path
+                                                                .split("/")
+                                                                .pop() +
+                                                                (r.extension_original
+                                                                    ? `.${r.extension_original}`
+                                                                    : "")}
+                                                    </span>
+                                                </div>
                                             ) : (
                                                 "-"
                                             )}

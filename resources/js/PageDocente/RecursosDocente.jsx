@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Config from "../Config";
 import AuthUser from "../pageauth/AuthUser";
-import SidebarDocente from "./SidebarDocente"; // 🔹 Agregado
-import "../styles/docente.css"; // Usa tu CSS existente
+import SidebarDocente from "./SidebarDocente";
+import "../styles/docente.css";
 
 const RecursosDocente = () => {
     const { getUserId } = AuthUser();
@@ -154,6 +154,22 @@ const RecursosDocente = () => {
         }
     };
 
+    // 🔹 FUNCIÓN PARA ABRIR ARCHIVO EN NUEVA PESTAÑA
+    const abrirArchivo = (archivoPath, tipo) => {
+        if (!archivoPath) {
+            setMensaje({ tipo: "error", texto: "No hay archivo para abrir" });
+            return;
+        }
+
+        // Abrir en nueva pestaña
+        window.open(archivoPath, "_blank", "noopener,noreferrer");
+
+        setMensaje({
+            tipo: "success",
+            texto: `Archivo ${tipo} abierto en nueva pestaña`,
+        });
+    };
+
     const eliminarRecurso = async (id) => {
         if (!window.confirm("¿Deseas eliminar este recurso?")) return;
         try {
@@ -206,10 +222,8 @@ const RecursosDocente = () => {
 
     return (
         <div className="admin-container d-flex" style={{ minHeight: "100vh" }}>
-            {/* 🔹 Sidebar fijo al lado izquierdo */}
             <SidebarDocente />
 
-            {/* 🔹 Contenido principal */}
             <div
                 className="admin-content overflow-y-auto flex flex-col gap-6 p-6"
                 style={{ maxHeight: "100vh", flexGrow: 1 }}
@@ -232,7 +246,6 @@ const RecursosDocente = () => {
                     </p>
                 )}
 
-                {/* Formulario */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <input
                         type="text"
@@ -312,7 +325,6 @@ const RecursosDocente = () => {
                     </button>
                 </form>
 
-                {/* Tabla */}
                 <h3 className="mt-6 mb-2">Mis Recursos</h3>
                 {recursos.length === 0 ? (
                     <p>No has subido recursos todavía.</p>
@@ -369,17 +381,34 @@ const RecursosDocente = () => {
                                                     href={r.url_recurso}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
+                                                    className="text-blue-400 hover:text-blue-300"
                                                 >
-                                                    Ver enlace
+                                                    🔗 Ver enlace
                                                 </a>
                                             ) : r.archivo_path ? (
-                                                <a
-                                                    href={`${window.location.origin}/storage/${r.archivo_path}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    Ver archivo
-                                                </a>
+                                                <div className="flex flex-col gap-1">
+                                                    {/* 🔥 BOTÓN PARA ABRIR EN NUEVA PESTAÑA */}
+                                                    <button
+                                                        onClick={() =>
+                                                            abrirArchivo(
+                                                                r.archivo_path,
+                                                                r.tipo
+                                                            )
+                                                        }
+                                                        className="text-blue-400 hover:text-blue-300 text-left"
+                                                    >
+                                                        📂 Abrir archivo
+                                                    </button>
+                                                    <span className="text-xs text-gray-400">
+                                                        {r.nombre_archivo_original ||
+                                                            r.archivo_path
+                                                                .split("/")
+                                                                .pop() +
+                                                                (r.extension_original
+                                                                    ? `.${r.extension_original}`
+                                                                    : "")}
+                                                    </span>
+                                                </div>
                                             ) : (
                                                 "-"
                                             )}
