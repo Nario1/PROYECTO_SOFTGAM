@@ -422,12 +422,14 @@ const RecursosDocente = () => {
                                                     r.visible_estudiantes ===
                                                         true
                                                 }
-                                                onChange={(e) =>
+                                                onChange={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
                                                     cambiarVisibilidad(
                                                         r.id,
                                                         e.target.checked
-                                                    )
-                                                }
+                                                    );
+                                                }}
                                             />
                                         </td>
                                         <td className="border border-gray-600 p-2 text-center">
