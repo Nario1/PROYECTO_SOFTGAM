@@ -658,11 +658,10 @@ const AsignarActividad = () => {
                                                     <button
                                                         onClick={() =>
                                                             manejarArchivo(
-                                                                actividadSeleccionada.id,
-                                                                e.archivo_entrega,
-                                                                tipoArchivo,
-                                                                true,
-                                                                e.estudiante_id // ✅ ENVIAR estudiante_id
+                                                                act.id, // ← ID de la actividad actual
+                                                                act.archivo_material, // ← Archivo material
+                                                                tipoArchivo, // ← Tipo detectado
+                                                                false // ← NO es entrega
                                                             )
                                                         }
                                                         className="text-blue-400 hover:text-blue-300"
