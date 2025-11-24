@@ -19,7 +19,7 @@ const Navbar = () => {
                     style={{ textDecoration: "none", color: "inherit" }}
                 >
                     <img
-                        src="softgam/img/logo.jpg"
+                        src="/img/logo.jpg"
                         alt="Logo"
                         width="36"
                         height="36"
