@@ -67,7 +67,7 @@ class NivelController extends Controller
             $disponible = $puntosTotal >= $nivel->requisito_puntos;
             
             // Calcular progreso hacia este nivel
-            $nivelAnterior = $index > 0 ? $niveles[$index - 1] : null;
+            $nivelAnterior = $index > 0 ? $nivel[$index - 1] : null;
             $puntosBase = $nivelAnterior ? $nivelAnterior->requisito_puntos : 0;
             $puntosNecesarios = $nivel->requisito_puntos - $puntosBase;
             $puntosProgreso = max(0, min($puntosTotal - $puntosBase, $puntosNecesarios));
@@ -613,23 +613,41 @@ class NivelController extends Controller
         }
     }
 
-    /**
-     * Verificar y asignar nivel automáticamente según puntos
-     */
     public function checkLevelUp($userId, Request $request)
     {
         try {
+            // TOTAL DE PUNTOS DEL ESTUDIANTE
             $totalPuntos = DB::table('puntos')
                 ->where('user_id', $userId)
                 ->sum('cantidad') ?? 0;
 
+            // EJECUTAR TU LÓGICA EXISTENTE DE LEVEL UP
             $nuevosNiveles = $this->asignarNivelesAutomaticos($userId, $totalPuntos);
+
+            // NIVEL ACTUAL DEL ESTUDIANTE
+            $nivelActual = DB::table('estudiante_niveles')
+                ->join('niveles', 'estudiante_niveles.nivel_id', '=', 'niveles.id')
+                ->where('estudiante_niveles.user_id', $userId)
+                ->orderBy('niveles.requisito_puntos', 'desc')
+                ->select('niveles.id', 'niveles.nombre', 'niveles.requisito_puntos')
+                ->first();
+
+            // OBTENER NÚMERO DE INSIGNIAS
+            $insignias = DB::table('estudiante_insignias')
+                ->where('user_id', $userId)
+                ->count();
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'user_id' => $userId,
                     'puntos_totales' => $totalPuntos,
+                    'nivel_actual' => $nivelActual ? [
+                        'id' => $nivelActual->id,
+                        'nombre' => $nivelActual->nombre,
+                        'requisito' => $nivelActual->requisito_puntos
+                    ] : null,
+                    'insignias' => $insignias,
                     'nuevos_niveles' => $nuevosNiveles,
                     'level_up_ocurrido' => count($nuevosNiveles) > 0
                 ]
@@ -643,6 +661,7 @@ class NivelController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Obtener estudiantes en un nivel específico

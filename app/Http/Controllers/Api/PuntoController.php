@@ -157,6 +157,7 @@ class PuntoController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    
     }
 
         /**
@@ -415,10 +416,10 @@ class PuntoController extends Controller
 
                 return [
                     'posicion' => $index + 1,
-                    'estudiante' => [
-                        'id' => $estudiante->id,
-                        'nombre' => $estudiante->nombre . ' ' . $estudiante->apellido
-                    ],
+                    'id' => $estudiante->id,
+                    'name' => $estudiante->nombre . ' ' . $estudiante->apellido, // ✅ CAMBIO AQUÍ
+                    'nombre' => $estudiante->nombre, // ✅ AGREGADO
+                    'apellido' => $estudiante->apellido, // ✅ AGREGADO
                     'puntos_totales' => $estudiante->total_puntos,
                     'nivel_actual' => $nivel ? [
                         'id' => $nivel->id,
@@ -449,7 +450,6 @@ class PuntoController extends Controller
             ], 500);
         }
     }
-
     /**
      * Obtener top estudiantes con más puntos
      */

@@ -711,4 +711,53 @@ export default {
             }
         );
     },
+        // RESTAR puntos a un estudiante (penalizaciones)
+    SubtractPuntos: (userId, cantidad, motivo) =>
+        axios.post(
+            `${base_api_url}/puntos/subtract`,
+            {
+                user_id: userId,
+                cantidad: cantidad,
+                motivo: motivo,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            }
+        ),
+
+    // CONSULTAR historial de transacciones de puntos de un estudiante
+    GetHistorialPuntos: (userId, filtros = {}) =>
+        axios.get(`${base_api_url}/puntos/${userId}/historial`, {
+            params: filtros, // {fecha, solo_ganancias, solo_perdidas}
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        }),
+
+    // LEADERBOARD general de estudiantes (ordenado por puntos)
+    GetLeaderboard: () =>
+        axios.get(`${base_api_url}/puntos/leaderboard`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        }),
+
+    // TOP estudiantes en un período (todo, semana, mes)
+    GetTopStudents: (periodo = 'todo') =>
+        axios.get(`${base_api_url}/puntos/top`, {
+            params: { periodo }, // 'todo', 'semana', 'mes'
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        }),
+
+    // ESTADÍSTICAS generales del sistema de puntos (admin y docentes)
+    GetSystemStats: () =>
+        axios.get(`${base_api_url}/puntos/stats/system`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        }),
 };
